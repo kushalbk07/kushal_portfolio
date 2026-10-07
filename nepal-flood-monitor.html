@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nepal Weather &amp; Flood Risk Monitor | Kushal BK</title>
+  <meta name="description" content="Live weather conditions and river-flood risk zones across Nepal, built with Open-Meteo weather data and GloFAS river-discharge forecasts.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ctext x='32' y='45' font-size='34' text-anchor='middle'%3E%F0%9F%8C%A7%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-deep: #0b1222;
+      --surface: rgba(255, 255, 255, 0.04);
+      --surface-2: rgba(255, 255, 255, 0.07);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --r0: #34d399;
+      --r1: #fbbf24;
+      --r2: #fb923c;
+      --r3: #f87171;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { background: var(--bg); scroll-behavior: smooth; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle at top right, #1e293b, transparent 55%);
+      background-repeat: no-repeat;
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+    .wrap { width: min(1200px, 92%); margin-inline: auto; }
+
+    /* Top bar */
+    .topbar {
+      position: sticky; top: 0; z-index: 1100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar .wrap { display: flex; align-items: center; gap: 16px; height: 64px; }
+    .back { color: var(--muted); text-decoration: none; font-weight: 700; font-size: .92rem; white-space: nowrap; }
+    .back:hover { color: var(--accent); }
+    .spacer { flex: 1; }
+    .live { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); }
+    .live strong { color: var(--text); font-weight: 700; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--r0); box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: ping 2s infinite; flex: none; }
+    .live.stale .dot { background: var(--r1); animation: none; }
+    .live.error .dot { background: var(--r3); animation: none; }
+    @keyframes ping { 70% { box-shadow: 0 0 0 9px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+    .btn-sm {
+      font: inherit; font-weight: 700; font-size: .82rem; color: var(--text);
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 8px 14px; cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm[disabled] { opacity: .6; cursor: progress; }
+
+    /* Intro */
+    .intro { padding: 48px 0 24px; }
+    .eyebrow { display: block; color: var(--accent); text-transform: uppercase; font-size: .75rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 10px; }
+    h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); line-height: 1.1; letter-spacing: -1px; }
+    .intro p { color: var(--muted); max-width: 720px; margin-top: 14px; }
+    .notice {
+      margin-top: 18px; display: inline-flex; gap: 10px; align-items: flex-start;
+      font-size: .85rem; color: var(--muted); max-width: 720px;
+      padding: 12px 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+    }
+    .notice b { color: var(--text); }
+
+    /* Banners */
+    .banner { margin: 18px 0 0; padding: 14px 18px; border-radius: 14px; border: 1px solid; font-size: .92rem; }
+    .banner[hidden] { display: none !important; }
+    .banner.alert { background: rgba(251,146,60,.1); border-color: rgba(251,146,60,.45); }
+    .banner.err { background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.45); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .banner.err span { flex: 1; min-width: 220px; }
+
+    /* Cards */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; }
+    .section { padding: 36px 0 8px; }
+    .section-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+    .section-head h2 { font-size: 1.5rem; letter-spacing: -.3px; }
+    .section-head p { color: var(--muted); font-size: .9rem; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 28px; }
+    .stat { padding: 20px 22px; }
+    .stat .label { font-size: .72rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; }
+    .stat .value { font-size: 1.7rem; font-weight: 800; line-height: 1.2; margin-top: 8px; letter-spacing: -.5px; }
+    .stat .sub { font-size: .85rem; color: var(--muted); margin-top: 4px; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+      font-size: .68rem; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; border: 1px solid; white-space: nowrap;
+    }
+    .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .r0 { --c: var(--r0); } .r1 { --c: var(--r1); } .r2 { --c: var(--r2); } .r3 { --c: var(--r3); }
+    .badge.r0, .badge.r1, .badge.r2, .badge.r3 { color: var(--c); border-color: color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); }
+
+    /* Map */
+    .map-card { position: relative; overflow: hidden; }
+    #map { height: 560px; background: #0b1222; }
+    .map-fallback { height: 100%; display: grid; place-items: center; text-align: center; padding: 30px; color: var(--muted); }
+    .leaflet-container { font-family: inherit; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #111b30; color: var(--text); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+    .leaflet-popup-content { margin: 14px 16px; font-size: .85rem; line-height: 1.5; min-width: 190px; }
+    .leaflet-popup-content h4 { font-size: 1rem; margin-bottom: 6px; }
+    .leaflet-popup-content .kv { display: flex; justify-content: space-between; gap: 18px; color: var(--muted); }
+    .leaflet-popup-content .kv b { color: var(--text); }
+    .leaflet-popup-close-button { color: var(--muted) !important; }
+    .leaflet-control-attribution { background: rgba(15,23,42,.8) !important; color: var(--muted) !important; }
+    .leaflet-control-attribution a { color: var(--accent) !important; }
+    .leaflet-bar a { background: #111b30; color: var(--text); border-color: var(--border); }
+    .leaflet-bar a:hover { background: #1b2a4a; }
+    .cmark {
+      position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center;
+      min-width: 46px; height: 26px; padding: 0 6px; border-radius: 13px; background: rgba(15,23,42,.94);
+      border: 2px solid var(--c); color: #f8fafc; font-weight: 800; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.55); white-space: nowrap;
+    }
+    .zmark {
+      position: absolute; transform: translate(-50%, -190%); display: flex; align-items: center; gap: 6px; white-space: nowrap;
+      padding: 4px 11px; border-radius: 999px; background: rgba(15,23,42,.94); border: 2px solid var(--c);
+      color: #fff; font-weight: 800; font-size: 11px; letter-spacing: .3px; box-shadow: 0 2px 10px rgba(0,0,0,.6);
+    }
+    .zmark::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+    .legend { background: rgba(15,23,42,.92); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--text); font-size: 12px; line-height: 1.9; }
+    .legend b { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: var(--c); }
+    .legend small { display: block; color: var(--muted); font-size: 11px; line-height: 1.4; margin-top: 4px; max-width: 180px; }
+
+    /* Zones */
+    .zones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .zone { padding: 24px; display: flex; flex-direction: column; gap: 14px; transition: border-color .25s, transform .25s; }
+    .zone:hover { border-color: color-mix(in srgb, var(--c, var(--accent)) 60%, transparent); }
+    .zone-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .zone h3 { font-size: 1.15rem; line-height: 1.3; }
+    .zone .where { color: var(--muted); font-size: .8rem; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .metric { background: rgba(255,255,255,.035); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+    .metric span { display: block; font-size: .66rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; }
+    .metric b { display: block; font-size: 1.05rem; margin-top: 2px; }
+    .metric small { color: var(--muted); font-weight: 500; font-size: .72rem; }
+    .spark { width: 100%; height: auto; display: block; }
+    .spark-cap { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: -4px; }
+    .why { list-style: none; font-size: .85rem; color: var(--muted); display: grid; gap: 4px; }
+    .why li::before { content: "›"; color: var(--c, var(--accent)); font-weight: 800; margin-right: 8px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { font-size: .72rem; font-weight: 700; color: var(--accent); background: rgba(56,189,248,.1); padding: 4px 11px; border-radius: 999px; }
+    .zone-actions { margin-top: auto; }
+    .link-btn { font: inherit; font-size: .85rem; font-weight: 700; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; }
+    .link-btn:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+    /* Cities */
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 7px 16px; cursor: pointer; transition: all .2s; }
+    .chip:hover { color: var(--text); border-color: var(--accent); }
+    .chip[aria-pressed="true"] { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+    .cities { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+    .city { padding: 20px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; transition: transform .25s, border-color .25s; border-left: 3px solid var(--c, var(--border)); }
+    .city:hover, .city:focus-visible { transform: translateY(-4px); border-color: var(--accent); border-left-color: var(--c, var(--accent)); }
+    .city-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .city h3 { font-size: 1.05rem; }
+    .city .terrain { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+    .city-main { display: flex; align-items: center; gap: 14px; }
+    .city-main .ico { font-size: 2.2rem; line-height: 1; }
+    .city-main .temp { font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+    .city-main .cond { font-size: .85rem; color: var(--muted); }
+    .city-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: .8rem; color: var(--muted); }
+    .city-meta b { color: var(--text); font-weight: 700; }
+    .rain3 { display: flex; gap: 6px; font-size: .74rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+    .rain3 span { flex: 1; text-align: center; }
+    .rain3 b { display: block; color: var(--text); font-size: .85rem; }
+
+    /* Skeletons */
+    .skeleton { min-height: 120px; background: linear-gradient(100deg, rgba(255,255,255,.03) 30%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.03) 70%); background-size: 300% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+    /* Method */
+    .method { padding: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .method h3 { font-size: 1rem; margin-bottom: 10px; }
+    .method p, .method li { color: var(--muted); font-size: .88rem; }
+    .method ul { padding-left: 18px; display: grid; gap: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-top: 6px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--muted); }
+    th { color: var(--text); font-size: .7rem; text-transform: uppercase; letter-spacing: 1px; }
+    td:first-child { white-space: nowrap; }
+
+    footer { margin-top: 56px; border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: .82rem; }
+    footer p + p { margin-top: 6px; }
+
+    @media (max-width: 980px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .zones, .method { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .stat { padding: 16px; }
+      .stat .value { font-size: 1.4rem; }
+      #map { height: 420px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .live .long { display: none; }
+      .intro { padding-top: 32px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="back" href="index.html">&larr; Back to portfolio</a>
+    <span class="spacer"></span>
+    <div class="live" id="live" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="liveText">Loading live data&hellip;</span></div>
+    <button class="btn-sm" id="refreshBtn" type="button">Refresh</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="intro">
+    <span class="eyebrow">Real-time monitoring</span>
+    <h1>Nepal Weather &amp; Flood Risk Monitor</h1>
+    <p>Live weather across Nepal's regions and a flood-risk classification for the country's major river basins, combining current conditions, rainfall forecasts and river-discharge forecasts into one clear picture.</p>
+    <div class="notice"><span aria-hidden="true">ℹ️</span><span><b>Indicative information only.</b> Risk levels are calculated from model data and are not an official warning. For official flood alerts, follow the <a href="https://www.dhm.gov.np/" target="_blank" rel="noopener noreferrer">Department of Hydrology and Meteorology (DHM)</a> and local authorities.</span></div>
+    <div class="banner err" id="errorBox" hidden role="alert"><span id="errorText"></span><button class="btn-sm" id="retryBtn" type="button">Try again</button></div>
+    <div class="banner alert" id="alertBox" hidden role="status"></div>
+  </section>
+
+  <section class="stats" id="stats" aria-label="Summary"></section>
+
+  <section class="section" aria-labelledby="mapTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="mapTitle">Risk map</h2>
+        <p>Shaded circles are river-basin flood risk zones. Temperature pills show current conditions, outlined by forecast rainfall risk. Click any marker for details.</p>
+      </div>
+    </div>
+    <div class="card map-card"><div id="map" role="region" aria-label="Map of Nepal with flood risk zones and weather"></div></div>
+  </section>
+
+  <section class="section" aria-labelledby="zonesTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="zonesTitle">River flood risk zones</h2>
+        <p>Major Terai rivers, their 7-day river-flow outlook and the rain falling nearby.</p>
+      </div>
+    </div>
+    <div class="zones" id="zones">
+      <div class="card zone skeleton"></div><div class="card zone skeleton"></div>
+      <div class="card zone skeleton"></div><div class="card zone skeleton"></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="citiesTitle">
+    <div class="section-head">
+      <div>
+        <h2 id="citiesTitle">Weather across Nepal</h2>
+        <p>Current conditions and 3-day rainfall outlook for key cities.</p>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filter by terrain">
+        <button class="chip" type="button" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-f="Terai" aria-pressed="false">Terai</button>
+        <button class="chip" type="button" data-f="Hills" aria-pressed="false">Hills</button>
+        <button class="chip" type="button" data-f="Mountains" aria-pressed="false">Mountains</button>
+      </div>
+    </div>
+    <div class="cities" id="cities">
+      <div class="card city skeleton"></div><div class="card city skeleton"></div><div class="card city skeleton"></div>
+      <div class="card city skeleton"></div><div class="card city skeleton"></div><div class="card city skeleton"></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="methodTitle">
+    <div class="section-head"><div><h2 id="methodTitle">How risk is calculated</h2></div></div>
+    <div class="card method">
+      <div>
+        <h3>River zones</h3>
+        <p>Each zone combines two signals, and the higher one sets the level.</p>
+        <ul style="margin-top:10px">
+          <li><b style="color:var(--text)">Flow index</b>: the highest forecast river discharge in the next 7 days divided by the median of the previous 30 days.</li>
+          <li><b style="color:var(--text)">Local rain</b>: the heaviest forecast daily rainfall in the next 3 days near the monitoring point. Rain alone cannot push a river zone above High, because the river has not yet responded.</li>
+        </ul>
+        <table aria-label="River zone thresholds">
+          <thead><tr><th>Level</th><th>Flow index</th><th>Daily rain</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge r0">Low</span></td><td>below 1.5&times;</td><td>below 30 mm</td></tr>
+            <tr><td><span class="badge r1">Moderate</span></td><td>1.5&ndash;2.5&times;</td><td>30&ndash;64.5 mm</td></tr>
+            <tr><td><span class="badge r2">High</span></td><td>2.5&ndash;4&times;</td><td>64.5&ndash;115.6 mm</td></tr>
+            <tr><td><span class="badge r3">Severe</span></td><td>4&times; or more</td><td>115.6 mm or more</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Cities &amp; limitations</h3>
+        <p>City markers are outlined by the same daily-rain thresholds, which are the commonly used heavy (64.5 mm) and very heavy (115.6 mm) rainfall categories. Heavy rain in hilly terrain raises flash-flood and landslide risk even where no large river is nearby.</p>
+        <ul style="margin-top:10px">
+          <li>River discharge comes from a global model (about 5 km resolution), not from gauge readings. Small rivers, such as the Bagmati in Kathmandu, are not resolved.</li>
+          <li>Monitoring points are approximate, and the flow index compares against the last 30 days, not a seasonal norm.</li>
+          <li>Weather refreshes about every 15 minutes at the source; river discharge updates daily. This page checks every 10 minutes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo.com</a> (CC BY 4.0). River discharge from the <a href="https://global-flood.emergency.copernicus.eu/" target="_blank" rel="noopener noreferrer">Global Flood Awareness System (GloFAS)</a> via Open-Meteo. Map &copy; OpenStreetMap contributors &copy; CARTO.</p>
+    <p>Built by Kushal BK &middot; <a href="index.html">Back to portfolio</a></p>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(() => {
+  'use strict';
+
+  const TZ = 'Asia/Kathmandu';
+  const REFRESH_MS = 10 * 60 * 1000;
+
+  // ---------- Reference data ----------
+  const RISK = [
+    { label: 'Low',      color: '#34d399' },
+    { label: 'Moderate', color: '#fbbf24' },
+    { label: 'High',     color: '#fb923c' },
+    { label: 'Severe',   color: '#f87171' }
+  ];
+
+  // Approximate monitoring points on major rivers (large basins resolved by the 5 km river model)
+  const RIVERS = [
+    { id: 'koshi',    name: 'Koshi River',               point: 'Chatara',       lat: 26.82, lon: 87.16, region: 'Eastern Terai', districts: ['Sunsari', 'Saptari'],     short: 'Koshi' },
+    { id: 'narayani', name: 'Narayani (Gandaki) River',  point: 'Narayangadh',   lat: 27.70, lon: 84.43, region: 'Central Terai', districts: ['Chitwan', 'Nawalpur', 'Parasi'], short: 'Narayani' },
+    { id: 'karnali',  name: 'Karnali River',             point: 'Chisapani',     lat: 28.64, lon: 81.29, region: 'Western Terai', districts: ['Bardiya', 'Kailali'],      short: 'Karnali' },
+    { id: 'mahakali', name: 'Mahakali River',            point: 'Mahendranagar', lat: 28.95, lon: 80.14, region: 'Far-western Terai', districts: ['Kanchanpur'],         short: 'Mahakali' }
+  ];
+
+  const CITIES = [
+    { name: 'Kathmandu',  lat: 27.7172, lon: 85.3240, terrain: 'Hills' },
+    { name: 'Pokhara',    lat: 28.2096, lon: 83.9856, terrain: 'Hills' },
+    { name: 'Biratnagar', lat: 26.4525, lon: 87.2718, terrain: 'Terai' },
+    { name: 'Birgunj',    lat: 27.0104, lon: 84.8770, terrain: 'Terai' },
+    { name: 'Janakpur',   lat: 26.7288, lon: 85.9266, terrain: 'Terai' },
+    { name: 'Hetauda',    lat: 27.4167, lon: 85.0333, terrain: 'Terai' },
+    { name: 'Bharatpur',  lat: 27.6833, lon: 84.4333, terrain: 'Terai' },
+    { name: 'Butwal',     lat: 27.7006, lon: 83.4483, terrain: 'Terai' },
+    { name: 'Nepalgunj',  lat: 28.0500, lon: 81.6167, terrain: 'Terai' },
+    { name: 'Dhangadhi',  lat: 28.6833, lon: 80.6000, terrain: 'Terai' },
+    { name: 'Ilam',       lat: 26.9100, lon: 87.9283, terrain: 'Hills' },
+    { name: 'Surkhet',    lat: 28.6000, lon: 81.6333, terrain: 'Hills' },
+    { name: 'Jumla',      lat: 29.2747, lon: 82.1838, terrain: 'Mountains' }
+  ];
+
+  const WMO = {
+    0: ['Clear sky', '☀️', '🌙'], 1: ['Mainly clear', '🌤️', '🌙'], 2: ['Partly cloudy', '⛅', '☁️'], 3: ['Overcast', '☁️'],
+    45: ['Fog', '🌫️'], 48: ['Rime fog', '🌫️'],
+    51: ['Light drizzle', '🌦️'], 53: ['Drizzle', '🌦️'], 55: ['Dense drizzle', '🌧️'], 56: ['Freezing drizzle', '🌧️'], 57: ['Freezing drizzle', '🌧️'],
+    61: ['Light rain', '🌧️'], 63: ['Rain', '🌧️'], 65: ['Heavy rain', '🌧️'], 66: ['Freezing rain', '🌧️'], 67: ['Freezing rain', '🌧️'],
+    71: ['Light snow', '❄️'], 73: ['Snow', '❄️'], 75: ['Heavy snow', '❄️'], 77: ['Snow grains', '❄️'],
+    80: ['Light showers', '🌦️'], 81: ['Showers', '🌧️'], 82: ['Violent showers', '⛈️'], 85: ['Snow showers', '❄️'], 86: ['Heavy snow showers', '❄️'],
+    95: ['Thunderstorm', '⛈️'], 96: ['Thunderstorm with hail', '⛈️'], 99: ['Severe thunderstorm with hail', '⛈️']
+  };
+
+  // ---------- Helpers ----------
+  const $ = (s) => document.querySelector(s);
+  const isNum = (v) => typeof v === 'number' && isFinite(v);
+  const fmt = (v, d = 0) => isNum(v) ? v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '–';
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const asArray = (x) => Array.isArray(x) ? x : [x];
+  const wmo = (code, isDay) => { const e = WMO[code] || ['Unknown', '🌡️']; return { text: e[0], icon: (isDay === 0 && e[2]) ? e[2] : e[1] }; };
+  const todayStr = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
+  const dayLabel = (d) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(d + 'T12:00:00Z'));
+  const clockLabel = (dt) => new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ }).format(dt) + ' NPT';
+
+  const rainScore = (mm) => mm >= 115.6 ? 3 : mm >= 64.5 ? 2 : mm >= 30 ? 1 : 0;
+  const flowScore = (r) => r == null ? 0 : r >= 4 ? 3 : r >= 2.5 ? 2 : r >= 1.5 ? 1 : 0;
+  const badge = (lvl) => `<span class="badge r${lvl}">${RISK[lvl].label}</span>`;
+
+  async function getJSON(url) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const res = await fetch(url, { signal: ctl.signal });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } finally { clearTimeout(timer); }
+  }
+
+  // ---------- Models ----------
+  function weatherModel(r) {
+    const c = (r && r.current) || {};
+    const d = (r && r.daily) || {};
+    const rain = (d.precipitation_sum || []).slice(0, 3).map((v) => isNum(v) ? v : 0);
+    while (rain.length < 3) rain.push(0);
+    return {
+      temp: c.temperature_2m, feels: c.apparent_temperature, hum: c.relative_humidity_2m,
+      wind: c.wind_speed_10m, gust: c.wind_gusts_10m, now: c.precipitation, code: c.weather_code, isDay: c.is_day,
+      rain, rainMax: Math.max(...rain), rainSum: rain.reduce((a, b) => a + b, 0),
+      tmax: d.temperature_2m_max && d.temperature_2m_max[0], tmin: d.temperature_2m_min && d.temperature_2m_min[0]
+    };
+  }
+
+  function analyseDischarge(daily) {
+    if (!daily || !Array.isArray(daily.time) || !Array.isArray(daily.river_discharge)) return null;
+    const t = daily.time, q = daily.river_discharge;
+    const today = todayStr();
+    let ti = t.findIndex((d) => d >= today);
+    if (ti < 0) ti = t.length - 1;
+    const past = q.slice(0, ti).filter(isNum).sort((a, b) => a - b);
+    const median = past.length ? (past.length % 2 ? past[(past.length - 1) / 2] : (past[past.length / 2 - 1] + past[past.length / 2]) / 2) : null;
+    const win = q.slice(ti, ti + 7);
+    const fut = win.filter(isNum);
+    if (!fut.length) return null;
+    const now = isNum(q[ti]) ? q[ti] : fut[0];
+    const peak = Math.max(...fut);
+    const peakIdx = ti + win.indexOf(peak);
+    const ratio = median && median > 0 ? peak / median : null;
+    const later = isNum(q[Math.min(ti + 2, q.length - 1)]) ? q[Math.min(ti + 2, q.length - 1)] : now;
+    const trend = now > 0 ? (later - now) / now : 0;
+    return { t, q, ti, now, peak, peakIdx, peakDate: t[peakIdx], median, ratio, trend: trend > 0.05 ? 'rising' : trend < -0.05 ? 'falling' : 'steady' };
+  }
+
+  function riverLevel(w, dis) {
+    const f = dis ? flowScore(dis.ratio) : 0;
+    const r = rainScore(w.rainMax);
+    return f >= r ? f : Math.min(r, 2);
+  }
+
+  // ---------- Sparkline ----------
+  function sparkline(z) {
+    const a = z.dis;
+    const W = 340, H = 92, P = 8;
+    const vals = a.q.filter(isNum);
+    const lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
+    const x = (i) => P + (W - 2 * P) * i / (a.q.length - 1);
+    const y = (v) => H - P - (H - 2 * P) * (v - lo) / span;
+    const pts = (from, to) => a.q.map((v, i) => [i, v]).filter(([i, v]) => i >= from && i <= to && isNum(v)).map(([i, v]) => x(i).toFixed(1) + ',' + y(v).toFixed(1));
+    const past = pts(0, a.ti), fut = pts(a.ti, a.q.length - 1);
+    const c = RISK[z.level].color;
+    const label = `${z.name}: river discharge over the past 30 days and the 7-day forecast. Now ${fmt(a.now)} cubic metres per second, forecast peak ${fmt(a.peak)} on ${dayLabel(a.peakDate)}.`;
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
+      <rect x="${x(a.ti).toFixed(1)}" y="0" width="${(W - x(a.ti)).toFixed(1)}" height="${H}" fill="${c}" opacity=".07"/>
+      <line x1="${x(a.ti).toFixed(1)}" y1="4" x2="${x(a.ti).toFixed(1)}" y2="${H - 4}" stroke="#94a3b8" stroke-dasharray="3 3" opacity=".6"/>
+      ${past.length > 1 ? `<polyline points="${past.join(' ')}" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${fut.length > 1 ? `<polyline points="${fut.join(' ')}" fill="none" stroke="${c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      <circle cx="${x(a.peakIdx).toFixed(1)}" cy="${y(a.peak).toFixed(1)}" r="4.5" fill="${c}" stroke="#0f172a" stroke-width="2"/>
+    </svg>`;
+  }
+
+  // ---------- State ----------
+  const state = { cities: [], rivers: [], flood: 'ok', updatedAt: null, filter: 'all', busy: false };
+
+  // ---------- Rendering ----------
+  function renderStats() {
+    const rivers = state.rivers, cities = state.cities;
+    const alerts = rivers.filter((z) => z.level >= 2).length;
+    const top = rivers.reduce((m, z) => z.level > m.level || (z.level === m.level && (z.dis ? z.dis.ratio || 0 : 0) > (m.dis ? m.dis.ratio || 0 : 0)) ? z : m, rivers[0]);
+    const wet = cities.reduce((m, c) => c.w.rainMax > m.w.rainMax ? c : m, cities[0]);
+    const withT = cities.filter((c) => isNum(c.w.temp));
+    const hot = withT.length ? withT.reduce((m, c) => c.w.temp > m.w.temp ? c : m, withT[0]) : null;
+    const cold = withT.length ? withT.reduce((m, c) => c.w.temp < m.w.temp ? c : m, withT[0]) : null;
+    $('#stats').innerHTML = `
+      <div class="card stat"><div class="label">River zones on alert</div><div class="value">${alerts} <span style="font-size:1rem;color:var(--muted);font-weight:700">of ${rivers.length}</span></div><div class="sub">at High or Severe level</div></div>
+      <div class="card stat"><div class="label">Highest river risk</div><div class="value" style="font-size:1.25rem">${esc(top.name)}</div><div class="sub">${badge(top.level)}</div></div>
+      <div class="card stat"><div class="label">Heaviest daily rain, next 3 days</div><div class="value">${fmt(wet.w.rainMax)} <span style="font-size:1rem;color:var(--muted);font-weight:700">mm</span></div><div class="sub">${esc(wet.name)}</div></div>
+      <div class="card stat"><div class="label">Temperature range now</div><div class="value">${hot ? fmt(hot.w.temp, 0) : '–'}° <span style="font-size:1rem;color:var(--muted);font-weight:700">/ ${cold ? fmt(cold.w.temp, 0) : '–'}°C</span></div><div class="sub">${hot ? esc(hot.name) : ''} · ${cold ? esc(cold.name) : ''}</div></div>`;
+  }
+
+  function renderAlert() {
+    const hot = state.rivers.filter((z) => z.level >= 2);
+    const stormy = state.cities.filter((c) => c.level >= 3);
+    const box = $('#alertBox');
+    if (!hot.length && !stormy.length) { box.hidden = true; return; }
+    const parts = [];
+    if (hot.length) parts.push('<b>Elevated river-flood risk:</b> ' + hot.map((z) => `${esc(z.name)} (${RISK[z.level].label})`).join(', '));
+    if (stormy.length) parts.push('<b>Very heavy rain forecast near:</b> ' + stormy.map((c) => `${esc(c.name)} (${fmt(c.w.rainMax)} mm)`).join(', '));
+    box.innerHTML = '⚠️ ' + parts.join(' &nbsp;·&nbsp; ');
+    box.hidden = false;
+  }
+
+  function renderZones() {
+    const box = $('#zones');
+    box.innerHTML = state.rivers.map((z) => {
+      const d = z.dis;
+      const why = [];
+      if (d) {
+        why.push(d.ratio != null
+          ? `Flow forecast to peak at <b>${fmt(d.ratio, 1)}&times;</b> the 30-day median on ${esc(dayLabel(d.peakDate))}`
+          : 'Flow forecast available, but no 30-day baseline to compare against');
+      } else {
+        why.push(state.flood === 'ok' ? 'No river-flow data for this point; level is a rain-only estimate' : 'River-flow data is temporarily unavailable; level is a rain-only estimate');
+      }
+      why.push(`Heaviest local rain: <b>${fmt(z.w.rainMax)} mm</b> in a day over the next 3 days`);
+      const arrow = d ? (d.trend === 'rising' ? '↗ Rising' : d.trend === 'falling' ? '↘ Falling' : '→ Steady') : '–';
+      return `<article class="card zone r${z.level}" id="zone-${z.id}">
+        <div class="zone-top">
+          <div><h3>${esc(z.name)}</h3><div class="where">${esc(z.region)} · monitoring point near ${esc(z.point)} (approx.)</div></div>
+          ${badge(z.level)}
+        </div>
+        <div class="metrics">
+          <div class="metric"><span>Flow now</span><b>${d ? fmt(d.now) : '–'} <small>m³/s</small></b></div>
+          <div class="metric"><span>7-day peak</span><b>${d ? fmt(d.peak) : '–'} <small>m³/s</small></b></div>
+          <div class="metric"><span>Flow index</span><b>${d && d.ratio != null ? fmt(d.ratio, 1) + '×' : '–'}</b></div>
+          <div class="metric"><span>Trend</span><b style="font-size:.92rem">${arrow}</b></div>
+        </div>
+        ${d ? sparkline(z) + `<div class="spark-cap"><span>30 days ago</span><span>today</span><span>+7 days</span></div>` : ''}
+        <ul class="why">${why.map((t) => `<li>${t}</li>`).join('')}</ul>
+        <div class="tags" aria-label="Downstream districts">${z.districts.map((x) => `<span class="tag">${esc(x)}</span>`).join('')}</div>
+        <div class="zone-actions"><button class="link-btn" type="button" data-zone="${z.id}">Show on map &rarr;</button></div>
+      </article>`;
+    }).join('');
+  }
+
+  function renderCities() {
+    const list = state.cities.filter((c) => state.filter === 'all' || c.terrain === state.filter);
+    $('#cities').innerHTML = list.map((c) => {
+      const w = c.w, info = wmo(w.code, w.isDay);
+      return `<article class="card city r${c.level}" tabindex="0" data-city="${esc(c.name)}" aria-label="${esc(c.name)}: ${fmt(w.temp)} degrees, ${esc(info.text)}. Open on map.">
+        <div class="city-top"><div><h3>${esc(c.name)}</h3><div class="terrain">${esc(c.terrain)}</div></div>${badge(c.level)}</div>
+        <div class="city-main"><span class="ico" aria-hidden="true">${info.icon}</span><div><div class="temp">${fmt(w.temp, 0)}°C</div><div class="cond">${esc(info.text)}</div></div></div>
+        <div class="city-meta">
+          <span>Feels like <b>${fmt(w.feels, 0)}°</b></span><span>Humidity <b>${fmt(w.hum, 0)}%</b></span>
+          <span>Wind <b>${fmt(w.wind, 0)} km/h</b></span><span>Rain now <b>${fmt(w.now, 1)} mm</b></span>
+        </div>
+        <div class="rain3" aria-label="Forecast rainfall, next 3 days">
+          ${w.rain.map((mm, i) => `<span>${i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : 'Day 3'}<b>${fmt(mm, 0)} mm</b></span>`).join('')}
+        </div>
+      </article>`;
+    }).join('') || '<p style="color:var(--muted)">No cities in this group.</p>';
+  }
+
+  // ---------- Map ----------
+  let map = null, zoneLayer = null, cityLayer = null;
+  const zoneMarkers = {}, cityMarkers = {};
+
+  function initMap() {
+    const el = $('#map');
+    if (!window.L) {
+      el.innerHTML = '<div class="map-fallback"><div><p style="font-size:2rem">🗺️</p><p>The map could not be loaded (it needs an internet connection to the map library).</p><p>Live weather and flood-risk data below still work.</p></div></div>';
+      return;
+    }
+    map = L.map(el, { zoomControl: true, scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false, minZoom: 6, maxZoom: 11, maxBounds: [[24.5, 78.0], [32.0, 90.5]] });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains: 'abcd', maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(map);
+    map.fitBounds([[26.3, 80.0], [30.5, 88.3]]);
+    zoneLayer = L.layerGroup().addTo(map);
+    cityLayer = L.layerGroup().addTo(map);
+
+    const legend = L.control({ position: 'bottomleft' });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = '<b>Risk level</b>' + RISK.map((r, i) => `<div class="r${i}"><i></i>${r.label}</div>`).join('') +
+        '<small>Circles: river flood zones. Pills: city temperature, outlined by rainfall risk.</small>';
+      return div;
+    };
+    legend.addTo(map);
+  }
+
+  function popupZone(z) {
+    const d = z.dis;
+    return `<h4>${esc(z.name)}</h4>${badge(z.level)}
+      <div style="margin-top:8px">
+        <div class="kv"><span>Flow now</span><b>${d ? fmt(d.now) + ' m³/s' : '–'}</b></div>
+        <div class="kv"><span>7-day peak</span><b>${d ? fmt(d.peak) + ' m³/s' : '–'}</b></div>
+        <div class="kv"><span>Flow index</span><b>${d && d.ratio != null ? fmt(d.ratio, 1) + '×' : '–'}</b></div>
+        <div class="kv"><span>Heaviest daily rain</span><b>${fmt(z.w.rainMax)} mm</b></div>
+      </div>`;
+  }
+  function popupCity(c) {
+    const info = wmo(c.w.code, c.w.isDay);
+    return `<h4>${info.icon} ${esc(c.name)}</h4>${badge(c.level)}
+      <div style="margin-top:8px">
+        <div class="kv"><span>Temperature</span><b>${fmt(c.w.temp, 1)}°C</b></div>
+        <div class="kv"><span>Conditions</span><b>${esc(info.text)}</b></div>
+        <div class="kv"><span>Humidity</span><b>${fmt(c.w.hum)}%</b></div>
+        <div class="kv"><span>Wind</span><b>${fmt(c.w.wind)} km/h</b></div>
+        <div class="kv"><span>Rain, next 3 days</span><b>${c.w.rain.map((v) => fmt(v)).join(' / ')} mm</b></div>
+      </div>`;
+  }
+
+  function renderMap() {
+    if (!map) return;
+    zoneLayer.clearLayers(); cityLayer.clearLayers();
+    state.rivers.forEach((z) => {
+      const color = RISK[z.level].color;
+      const circle = L.circle([z.lat, z.lon], { radius: 32000, color, weight: 2, fillColor: color, fillOpacity: 0.22 }).addTo(zoneLayer);
+      const label = L.marker([z.lat, z.lon], {
+        icon: L.divIcon({ className: '', iconSize: [0, 0], html: `<div class="zmark r${z.level}">${esc(z.short)} · ${RISK[z.level].label}</div>` }),
+        keyboard: false
+      }).addTo(zoneLayer);
+      circle.bindPopup(popupZone(z)); label.bindPopup(popupZone(z));
+      zoneMarkers[z.id] = { circle, label, z };
+    });
+    state.cities.forEach((c) => {
+      const m = L.marker([c.lat, c.lon], {
+        icon: L.divIcon({ className: '', iconSize: [0, 0], popupAnchor: [0, -16], html: `<div class="cmark r${c.level}">${fmt(c.w.temp, 0)}°</div>` }),
+        title: c.name
+      }).addTo(cityLayer);
+      m.bindPopup(popupCity(c));
+      cityMarkers[c.name] = m;
+    });
+  }
+
+  function focusOnMap(latlng, zoom, marker) {
+    if (!map) return;
+    $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    map.flyTo(latlng, zoom, { duration: 0.9 });
+    if (marker) setTimeout(() => marker.openPopup(), 950);
+  }
+
+  // ---------- Live status ----------
+  function updateLive(mode) {
+    const live = $('#live');
+    live.classList.toggle('stale', mode === 'stale');
+    live.classList.toggle('error', mode === 'error');
+    if (!state.updatedAt) { $('#liveText').textContent = mode === 'error' ? 'Live data unavailable' : 'Loading live data…'; return; }
+    const mins = Math.round((Date.now() - state.updatedAt.getTime()) / 60000);
+    const ago = mins < 1 ? 'just now' : mins + ' min ago';
+    $('#liveText').innerHTML = `<strong>${mode === 'error' ? 'Showing last data' : 'Live'}</strong> <span class="long">· updated ${clockLabel(state.updatedAt)} (${ago})</span>`;
+  }
+
+  function showError(msg) {
+    $('#errorText').textContent = msg;
+    $('#errorBox').hidden = false;
+    updateLive('error');
+  }
+
+  // ---------- Loading ----------
+  async function load() {
+    if (state.busy) return;
+    state.busy = true;
+    $('#refreshBtn').disabled = true;
+    $('#refreshBtn').textContent = 'Refreshing…';
+    try {
+      const pts = [...CITIES, ...RIVERS];
+      const lat = pts.map((p) => p.lat).join(',');
+      const lon = pts.map((p) => p.lon).join(',');
+      const wUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+        '&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,wind_gusts_10m' +
+        '&daily=precipitation_sum,temperature_2m_max,temperature_2m_min&forecast_days=4&timezone=' + encodeURIComponent(TZ) + '&wind_speed_unit=kmh';
+      const rl = RIVERS.map((p) => p.lat).join(','), ro = RIVERS.map((p) => p.lon).join(',');
+      const fUrl = 'https://flood-api.open-meteo.com/v1/flood?latitude=' + rl + '&longitude=' + ro + '&daily=river_discharge&past_days=30&forecast_days=7';
+
+      const [w, f] = await Promise.allSettled([getJSON(wUrl), getJSON(fUrl)]);
+      if (w.status === 'rejected') throw new Error('weather');
+      const wArr = asArray(w.value);
+      if (wArr.length !== pts.length) throw new Error('weather-shape');
+
+      let fArr = null;
+      if (f.status === 'fulfilled') { fArr = asArray(f.value); if (fArr.length !== RIVERS.length) fArr = null; }
+
+      state.flood = fArr ? 'ok' : 'down';
+      state.cities = CITIES.map((c, i) => { const w2 = weatherModel(wArr[i]); return { ...c, w: w2, level: rainScore(w2.rainMax) }; });
+      state.rivers = RIVERS.map((r, i) => {
+        const w2 = weatherModel(wArr[CITIES.length + i]);
+        const dis = fArr ? analyseDischarge(fArr[i] && fArr[i].daily) : null;
+        return { ...r, w: w2, dis, level: riverLevel(w2, dis) };
+      });
+      state.updatedAt = new Date();
+
+      $('#errorBox').hidden = true;
+      if (state.flood === 'down') { $('#errorText').textContent = 'River-flow data could not be loaded right now. Weather is live, and river zones show a rain-only estimate.'; $('#errorBox').hidden = false; }
+      renderStats(); renderAlert(); renderZones(); renderCities(); renderMap();
+      updateLive(state.flood === 'down' ? 'stale' : 'ok');
+    } catch (err) {
+      showError(state.updatedAt
+        ? 'Could not refresh live data. Showing the last successful update.'
+        : 'Could not load live weather data. Please check your connection and try again.');
+      if (!state.updatedAt) {
+        $('#zones').innerHTML = ''; $('#cities').innerHTML = '';
+      }
+    } finally {
+      state.busy = false;
+      $('#refreshBtn').disabled = false;
+      $('#refreshBtn').textContent = 'Refresh';
+    }
+  }
+
+  // ---------- Events ----------
+  $('#refreshBtn').addEventListener('click', load);
+  $('#retryBtn').addEventListener('click', load);
+
+  $('#chips').addEventListener('click', (e) => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    state.filter = b.dataset.f;
+    document.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    if (state.cities.length) renderCities();
+  });
+
+  $('#zones').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-zone]'); if (!b) return;
+    const m = zoneMarkers[b.dataset.zone]; if (!m) return;
+    focusOnMap([m.z.lat, m.z.lon], 8, m.circle);
+  });
+
+  function openCity(card) {
+    const name = card.dataset.city, c = state.cities.find((x) => x.name === name);
+    if (c) focusOnMap([c.lat, c.lon], 9, cityMarkers[name]);
+  }
+  $('#cities').addEventListener('click', (e) => { const c = e.target.closest('.city'); if (c) openCity(c); });
+  $('#cities').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const c = e.target.closest('.city'); if (c) { e.preventDefault(); openCity(c); } } });
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.updatedAt && Date.now() - state.updatedAt.getTime() > REFRESH_MS) load();
+  });
+
+  // ---------- Start ----------
+  initMap();
+  load();
+  setInterval(load, REFRESH_MS);
+  setInterval(() => { if (state.updatedAt) updateLive($('#live').classList.contains('error') ? 'error' : $('#live').classList.contains('stale') ? 'stale' : 'ok'); }, 30000);
+})();
+</script>
+</body>
+</html>
