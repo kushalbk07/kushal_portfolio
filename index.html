@@ -2,548 +2,448 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PocketNepal | Expense tracker and bill splitter</title>
-  <meta name="description" content="PocketNepal helps you track where your money goes and split bills with friends. Free, private, works in Nepali Rupees. Your data stays in your browser.">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#4f46e5">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f46e5'/%3E%3Cpath d='M5 24 12 11l4.5 7 3-4L27 24z' fill='%23fff'/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kushal BK | Web Developer</title>
+
+  <meta name="description" content="Portfolio of Kushal BK, a web developer from Nepal building e-commerce and modern web applications such as Momo Hub and Sathi Collection.">
+  <meta name="keywords" content="Kushal BK, Web Developer, Nepal, JavaScript, Python, HTML, CSS, Momo Hub, Sathi Collection">
+  <meta name="author" content="Kushal BK">
+  <meta name="theme-color" content="#0f172a">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Kushal BK | Web Developer">
+  <meta property="og:description" content="Web developer building e-commerce and modern web applications. See my skills and projects.">
+
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-
-  <script>
-    /* Apply the saved theme before the page paints, so there is no flash of the wrong colours */
-    (function () {
-      try {
-        var prefs = JSON.parse(localStorage.getItem('pocketnepal.prefs') || '{}');
-        var theme = prefs.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.setAttribute('data-theme', theme);
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
-    })();
-  </script>
 </head>
 <body>
 
-<!-- Icon sprite: every icon on the page is drawn from here -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
-  <symbol id="i-split" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
-  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="15" rx="3"/><path d="M2 10h20"/><path d="M16 15h2"/></symbol>
-  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></symbol>
-  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
-  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
-  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
-  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
-  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
-  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
-  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
-  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
-</svg>
-
 <a class="skip-link" href="#main">Skip to content</a>
 
-<!-- ================= HEADER ================= -->
-<header class="site-header">
-  <div class="header-inner">
-    <a class="brand" href="#dashboard" data-nav aria-label="PocketNepal home">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M5 24 12 11l4.5 7 3-4L27 24z" fill="#fff"/></svg>
-      </span>
-      <span class="brand-name">Pocket<b>Nepal</b></span>
-    </a>
+<header id="navbar">
+  <div class="container nav-inner">
+    <a href="#home" class="logo" aria-label="Kushal BK, back to top">Kushal.BK</a>
 
-    <nav class="main-nav" aria-label="Main">
-      <a href="#dashboard" data-nav="dashboard"><svg class="ico"><use href="#i-dashboard"/></svg><span>Dashboard</span></a>
-      <a href="#splitter" data-nav="splitter"><svg class="ico"><use href="#i-split"/></svg><span>Bill Splitter</span></a>
-      <a href="#expenses" data-nav="expenses"><svg class="ico"><use href="#i-wallet"/></svg><span>Expenses</span></a>
-      <a href="#analytics" data-nav="analytics"><svg class="ico"><use href="#i-chart"/></svg><span>Analytics</span></a>
-      <a href="#settings" data-nav="settings"><svg class="ico"><use href="#i-settings"/></svg><span>Settings</span></a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav id="navLinks" aria-label="Main navigation">
+      <a href="#about">About</a>
+      <a href="#skills">Skills</a>
+      <a href="#projects">Projects</a>
+      <a href="#contact" class="nav-cta">Contact</a>
     </nav>
-
-    <div class="header-actions">
-      <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode" title="Switch theme">
-        <svg class="ico ico-moon"><use href="#i-moon"/></svg>
-        <svg class="ico ico-sun"><use href="#i-sun"/></svg>
-      </button>
-      <button type="button" class="btn btn-primary header-add" data-action="add-expense">
-        <svg class="ico"><use href="#i-plus"/></svg><span>Add expense</span>
-      </button>
-    </div>
   </div>
 </header>
 
-<main id="main" class="app" tabindex="-1">
+<main id="main">
 
-  <!-- ================= DASHBOARD (landing + overview) ================= -->
-  <section class="view" id="view-dashboard" aria-labelledby="h-dashboard" hidden>
-
-    <div class="hero">
-      <div class="hero-copy">
-        <span class="eyebrow">Free · Private · Made for Nepal</span>
-        <h1 id="h-dashboard" tabindex="-1">Know where your money goes.</h1>
-        <p class="hero-sub">Track expenses. Split bills. Stay within budget.</p>
-        <div class="hero-buttons">
-          <button type="button" class="btn btn-primary btn-lg" data-action="add-expense">Track My Spending</button>
-          <a href="#splitter" class="btn btn-secondary btn-lg" data-nav>Split a Bill</a>
+  <!-- HERO -->
+  <section id="home" class="hero">
+    <div class="container hero-grid">
+      <div class="hero-text reveal">
+        <span class="eyebrow">Hello, I'm</span>
+        <h1>Kushal BK<span class="hero-role">Web Developer</span></h1>
+        <p class="lead">
+          I build fast, clean and user-friendly websites, from e-commerce stores like
+          <strong>Sathi Collection</strong> to food-ordering platforms like <strong>Momo Hub</strong>.
+          I care about good design as much as good code.
+        </p>
+        <div class="hero-actions">
+          <a href="#projects" class="btn btn-primary">View My Work</a>
+          <a href="#contact" class="btn btn-ghost">Get In Touch</a>
         </div>
-        <p class="hero-note"><svg class="ico"><use href="#i-shield"/></svg> No sign-up. Your data never leaves this browser.</p>
+        <ul class="socials" aria-label="Social links">
+          <li>
+            <a href="https://github.com/kushalbk07" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:kushalbk2002@gmail.com" aria-label="Send me an email">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="m2 7 10 6 10-6"/></svg>
+            </a>
+          </li>
+        </ul>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <svg viewBox="0 0 420 260" role="presentation">
-          <defs>
-            <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--art-sky-1)"/><stop offset="1" stop-color="var(--art-sky-2)"/></linearGradient>
-          </defs>
-          <rect width="420" height="260" rx="28" fill="url(#skyG)"/>
-          <circle cx="318" cy="74" r="30" fill="var(--art-sun)"/>
-          <text x="318" y="83" text-anchor="middle" font-size="26" font-weight="800" fill="var(--art-sun-text)" font-family="Inter, system-ui, sans-serif">Rs</text>
-          <path d="M0 190 L70 98 L112 150 L168 70 L246 176 L296 126 L420 210 L420 260 L0 260 Z" fill="var(--art-peak-far)"/>
-          <path d="M0 220 L88 134 L140 186 L214 112 L300 214 L350 168 L420 226 L420 260 L0 260 Z" fill="var(--art-peak-near)"/>
-          <path d="M168 70 L186 94 L172 90 L160 100 L148 88 Z" fill="#fff" opacity=".85"/>
-          <path d="M214 112 L228 132 L216 128 L205 136 L198 124 Z" fill="#fff" opacity=".8"/>
-          <rect x="34" y="28" width="116" height="52" rx="14" fill="var(--surface)" opacity=".95"/>
-          <rect x="46" y="40" width="46" height="8" rx="4" fill="var(--muted)" opacity=".5"/>
-          <rect x="46" y="55" width="76" height="12" rx="6" fill="var(--primary)"/>
-        </svg>
+
+      <div class="hero-image reveal">
+        <div class="glow-sphere" aria-hidden="true"></div>
+        <div class="hex-frame">
+          <div class="hex-inner">
+            <img src="images/profile.jpg" alt="Portrait of Kushal BK" class="profile-pic" width="300" height="346">
+          </div>
+        </div>
       </div>
-    </div>
-
-    <div class="stat-strip" aria-label="Your totals so far">
-      <div class="strip-item"><span class="strip-num" id="stripBills" data-count="0">0</span><span class="strip-label">Bills Split</span></div>
-      <div class="strip-item"><span class="strip-num" id="stripMoney" data-count="0" data-money="1">Rs. 0</span><span class="strip-label">Money Tracked</span></div>
-      <div class="strip-item"><span class="strip-num" id="stripCount" data-count="0">0</span><span class="strip-label">Expenses Recorded</span></div>
-    </div>
-
-    <div class="section-head">
-      <h2>This month</h2>
-      <span class="muted" id="dashMonthLabel"></span>
-    </div>
-
-    <div class="kpi-grid">
-      <article class="kpi-card">
-        <span class="kpi-label">Total Spent This Month</span>
-        <strong class="kpi-value" id="kpiMonth">Rs. 0</strong>
-      </article>
-      <article class="kpi-card">
-        <span class="kpi-label">Today's Spending</span>
-        <strong class="kpi-value" id="kpiToday">Rs. 0</strong>
-      </article>
-      <article class="kpi-card">
-        <span class="kpi-label">Largest Expense</span>
-        <strong class="kpi-value" id="kpiLargest">Rs. 0</strong>
-        <span class="kpi-sub" id="kpiLargestSub"></span>
-      </article>
-      <article class="kpi-card">
-        <span class="kpi-label">Number of Expenses</span>
-        <strong class="kpi-value" id="kpiCount">0</strong>
-      </article>
-    </div>
-
-    <div class="dash-grid">
-      <article class="card budget-card" aria-labelledby="h-budget">
-        <div class="card-head">
-          <h2 id="h-budget">Monthly budget</h2>
-          <button type="button" class="btn btn-ghost btn-sm" id="budgetEditBtn" data-action="edit-budget">Set budget</button>
-        </div>
-        <div id="budgetBody"></div>
-      </article>
-
-      <article class="card" aria-labelledby="h-insights">
-        <div class="card-head"><h2 id="h-insights">Smart insights</h2></div>
-        <ul class="insight-list" id="insightList"></ul>
-        <p class="fine-print">Friendly observations based on your own entries. Not financial advice.</p>
-      </article>
-
-      <article class="card" aria-labelledby="h-topcats">
-        <div class="card-head"><h2 id="h-topcats">Top categories</h2></div>
-        <div id="topCats"></div>
-      </article>
-
-      <article class="card" aria-labelledby="h-recent">
-        <div class="card-head">
-          <h2 id="h-recent">Recent expenses</h2>
-          <a href="#expenses" class="link-arrow" data-nav>View all <svg class="ico"><use href="#i-arrow"/></svg></a>
-        </div>
-        <ul class="exp-list compact" id="recentList"></ul>
-        <div id="recentEmpty" class="empty" hidden></div>
-      </article>
     </div>
   </section>
 
-  <!-- ================= BILL SPLITTER ================= -->
-  <section class="view" id="view-splitter" aria-labelledby="h-splitter" hidden>
-    <header class="page-head">
-      <h1 id="h-splitter" tabindex="-1">Smart Bill Splitter</h1>
-      <p>Split a restaurant bill, trip, rent or groceries fairly, then see exactly who owes whom.</p>
-    </header>
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="eyebrow">About Me</span>
+        <h2>Crafting the future of web applications</h2>
+      </div>
 
-    <div class="split-layout">
-      <form class="card split-form" id="splitForm" novalidate autocomplete="off">
-        <div class="seg" role="group" aria-label="How to split">
-          <button type="button" class="seg-btn" data-mode="equal" aria-pressed="true">Split equally</button>
-          <button type="button" class="seg-btn" data-mode="custom" aria-pressed="false">Custom amounts</button>
-          <button type="button" class="seg-btn" data-mode="settle" aria-pressed="false">Who owes whom</button>
+      <div class="about-grid reveal">
+        <div class="about-copy">
+          <p>
+            I'm a web developer based in Nepal who enjoys turning ideas into working products.
+            I started with HTML, CSS and JavaScript, and I now build complete websites and
+            storefronts that look good on every screen and are easy to use.
+          </p>
+          <p>
+            Alongside development I work with design tools like Photoshop, Illustrator and Canva,
+            which helps me think about layout, colour and branding, not just code.
+            I'm currently learning React and Figma to take my front-end work to the next level.
+          </p>
         </div>
-        <p class="mode-help" id="modeHelp"></p>
 
-        <div class="field">
-          <label for="splitTitle">What is this for? <span class="optional">optional</span></label>
-          <input type="text" id="splitTitle" maxlength="60" placeholder="e.g. Dinner at Thamel">
+        <div class="about-stats">
+          <div class="stat-item">
+            <span class="stat-number">2+</span>
+            <span class="stat-label">Years of coding</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">4</span>
+            <span class="stat-label">Projects showcased</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">8+</span>
+            <span class="stat-label">Tools &amp; technologies</span>
+          </div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="field-row">
-          <div class="field">
-            <label for="splitTotal">Total bill (Rs.)</label>
-            <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
-              <input type="number" id="splitTotal" inputmode="decimal" min="0" step="0.01" placeholder="2500" aria-describedby="splitTotalErr">
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="eyebrow">Expertise</span>
+        <h2>Technical Skills</h2>
+      </div>
+
+      <div class="skill-group reveal">
+        <h3 class="group-title">Web Development</h3>
+        <div class="skills-wrapper">
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>HTML5</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>CSS3</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>JavaScript</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>Python</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/wordpress/wordpress-plain.svg" alt="" width="50" height="50" loading="lazy"></div><h4>WordPress</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>Git &amp; GitHub</h4></div>
+        </div>
+      </div>
+
+      <div class="skill-group reveal">
+        <h3 class="group-title">Design</h3>
+        <div class="skills-wrapper">
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/photoshop/photoshop-plain.svg" alt="" width="50" height="50" loading="lazy"></div><h4>Photoshop</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/illustrator/illustrator-plain.svg" alt="" width="50" height="50" loading="lazy"></div><h4>Illustrator</h4></div>
+          <div class="skill-box"><div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/canva/canva-original.svg" alt="" width="50" height="50" loading="lazy"></div><h4>Canva</h4></div>
+        </div>
+      </div>
+
+      <div class="skill-group reveal">
+        <h3 class="group-title group-title-amber">Currently Learning</h3>
+        <div class="skills-wrapper">
+          <div class="skill-box learning">
+            <div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="" width="50" height="50" loading="lazy"></div>
+            <h4>React</h4>
+            <div class="progress-container" role="progressbar" aria-label="React learning progress" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: 40%;"></div></div>
+            <span class="progress-label">40%</span>
+          </div>
+          <div class="skill-box learning">
+            <div class="icon-container"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg" alt="" width="50" height="50" loading="lazy"></div>
+            <h4>Figma</h4>
+            <div class="progress-container" role="progressbar" aria-label="Figma learning progress" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: 60%;"></div></div>
+            <span class="progress-label">60%</span>
+          </div>
+          <div class="skill-box learning">
+            <div class="icon-container"><img src="https://cdn.worldvectorlogo.com/logos/adobe-indesign-cc-icon.svg" alt="" width="50" height="50" loading="lazy"></div>
+            <h4>InDesign</h4>
+            <div class="progress-container" role="progressbar" aria-label="InDesign learning progress" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: 30%;"></div></div>
+            <span class="progress-label">30%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="eyebrow">My Work</span>
+        <h2>Featured Projects</h2>
+      </div>
+
+      <div class="projects-grid">
+
+        <!-- Featured project: PocketNepal expense tracker and bill splitter -->
+        <article class="project-card project-featured featured-flip reveal">
+          <div class="featured-body">
+            <div class="project-meta">
+              <span class="live-pill"><span class="live-dot" aria-hidden="true"></span>Live app</span>
+              <span class="project-kind">Web app</span>
             </div>
-            <p class="field-error" id="splitTotalErr" role="alert"></p>
+            <h3>PocketNepal: Expense Tracker &amp; Bill Splitter</h3>
+            <p>A free money tool built for Nepal, in Nepali Rupees. Split a bill equally or by custom amounts, work out who owes whom with the fewest possible payments, then track your spending against a monthly budget. No sign-up needed: everything is saved privately in your browser.</p>
+            <ul class="feature-list">
+              <li>Bill splitter with tip, custom shares and smart settle-up</li>
+              <li>Expense tracker with search, filters, budget alerts and CSV export</li>
+              <li>Charts, monthly comparison and friendly insights, in light and dark mode</li>
+            </ul>
+            <ul class="project-tags" aria-label="Technologies used">
+              <li>HTML</li><li>CSS</li><li>JavaScript</li><li>Chart.js</li><li>LocalStorage</li><li>Responsive UI</li>
+            </ul>
+            <div class="project-links project-links-lg">
+              <a class="btn btn-primary btn-sm-link" href="pocketnepal/index.html">Open PocketNepal</a>
+              <a href="https://github.com/kushalbk07/kushal_portfolio/tree/main/pocketnepal" target="_blank" rel="noopener noreferrer">Source Code &rarr;</a>
+            </div>
           </div>
-          <div class="field">
-            <label for="splitTip">Tip (%)</label>
-            <div class="input-affix"><input type="number" id="splitTip" inputmode="decimal" min="0" max="100" step="0.5" value="0" aria-describedby="splitTipErr"><span class="affix affix-end" aria-hidden="true">%</span></div>
-            <p class="field-error" id="splitTipErr" role="alert"></p>
-          </div>
-        </div>
-        <div class="chips" role="group" aria-label="Quick tip">
-          <button type="button" class="chip" data-tip="0">No tip</button>
-          <button type="button" class="chip" data-tip="5">5%</button>
-          <button type="button" class="chip" data-tip="10">10%</button>
-          <button type="button" class="chip" data-tip="13">13% service + VAT</button>
-          <button type="button" class="chip" data-tip="15">15%</button>
-        </div>
 
-        <div class="field">
-          <label for="peopleCount">Number of people</label>
-          <div class="stepper">
-            <button type="button" class="icon-btn" id="peopleMinus" aria-label="Remove one person"><svg class="ico"><use href="#i-minus"/></svg></button>
-            <input type="number" id="peopleCount" inputmode="numeric" min="2" max="20" step="1" value="2" aria-describedby="peopleErr">
-            <button type="button" class="icon-btn" id="peoplePlus" aria-label="Add one person"><svg class="ico"><use href="#i-plus"/></svg></button>
-          </div>
-          <p class="field-error" id="peopleErr" role="alert"></p>
-        </div>
-
-        <div class="field" id="settleSharesBox" hidden>
-          <span class="label-like" id="settleSharesLabel">How are the shares decided?</span>
-          <div class="chips" role="group" aria-labelledby="settleSharesLabel">
-            <button type="button" class="chip" data-shares="equal" aria-pressed="true">Everyone owes the same</button>
-            <button type="button" class="chip" data-shares="custom" aria-pressed="false">Custom shares</button>
-          </div>
-        </div>
-
-        <div class="people-head">
-          <h2>People</h2>
-          <div class="people-tools">
-            <button type="button" class="btn btn-ghost btn-sm" id="fillEqualBtn" hidden>Fill equally</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="addPersonBtn"><svg class="ico"><use href="#i-plus"/></svg> Add person</button>
-          </div>
-        </div>
-        <ul class="people-list" id="peopleList"></ul>
-        <p class="custom-tally" id="customTally" aria-live="polite" hidden></p>
-
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" id="splitResetBtn"><svg class="ico"><use href="#i-reset"/></svg> Reset</button>
-        </div>
-      </form>
-
-      <aside class="card split-result" id="splitResult" aria-live="polite" aria-labelledby="h-result">
-        <h2 id="h-result">Result</h2>
-        <div id="splitResultBody"></div>
-        <div class="result-actions" id="resultActions" hidden>
-          <button type="button" class="btn btn-secondary" id="copyBtn"><svg class="ico"><use href="#i-copy"/></svg> Copy results</button>
-          <button type="button" class="btn btn-secondary" id="shareBtn"><svg class="ico"><use href="#i-share"/></svg> Share</button>
-          <button type="button" class="btn btn-primary" id="saveBillBtn"><svg class="ico"><use href="#i-save"/></svg> Save to history</button>
-        </div>
-      </aside>
-    </div>
-
-    <section class="card history-card" aria-labelledby="h-history">
-      <div class="card-head">
-        <h2 id="h-history">Bill history <span class="count-pill" id="historyCount">0</span></h2>
-        <button type="button" class="btn btn-danger-ghost btn-sm" id="clearHistoryBtn"><svg class="ico"><use href="#i-trash"/></svg> Delete bill history</button>
-      </div>
-      <ul class="history-list" id="historyList"></ul>
-      <div id="historyEmpty" class="empty small" hidden>
-        <p><strong>No saved bills yet.</strong></p>
-        <p>Work out a split above, then press “Save to history” to keep it here.</p>
-      </div>
-    </section>
-  </section>
-
-  <!-- ================= EXPENSES ================= -->
-  <section class="view" id="view-expenses" aria-labelledby="h-expenses" hidden>
-    <header class="page-head page-head-row">
-      <div>
-        <h1 id="h-expenses" tabindex="-1">Where did my money go?</h1>
-        <p>Every expense you have recorded, in one place.</p>
-      </div>
-      <button type="button" class="btn btn-primary" data-action="add-expense"><svg class="ico"><use href="#i-plus"/></svg> Add expense</button>
-    </header>
-
-    <div class="card filter-card" id="filterCard">
-      <div class="filter-grid">
-        <div class="field search-field">
-          <label for="fSearch">Search</label>
-          <div class="input-affix"><svg class="ico affix-ico" aria-hidden="true"><use href="#i-search"/></svg>
-            <input type="search" id="fSearch" placeholder="Search description or category" class="has-ico">
-          </div>
-        </div>
-        <div class="field">
-          <label for="fCat">Category</label>
-          <select id="fCat"></select>
-        </div>
-        <div class="field">
-          <label for="fFrom">From</label>
-          <input type="date" id="fFrom">
-        </div>
-        <div class="field">
-          <label for="fTo">To</label>
-          <input type="date" id="fTo">
-        </div>
-        <div class="field">
-          <label for="fSort">Sort by</label>
-          <select id="fSort">
-            <option value="date-desc">Newest first</option>
-            <option value="date-asc">Oldest first</option>
-            <option value="amount-desc">Amount: high to low</option>
-            <option value="amount-asc">Amount: low to high</option>
-          </select>
-        </div>
-      </div>
-      <div class="filter-foot">
-        <p class="muted" id="filterSummary" aria-live="polite"></p>
-        <button type="button" class="btn btn-ghost btn-sm" id="clearFiltersBtn">Clear filters</button>
-      </div>
-    </div>
-
-    <ul class="exp-list" id="expList"></ul>
-    <div id="expEmpty" class="empty" hidden></div>
-    <div class="more-wrap"><button type="button" class="btn btn-secondary" id="moreBtn" hidden>Show more</button></div>
-  </section>
-
-  <!-- ================= ANALYTICS ================= -->
-  <section class="view" id="view-analytics" aria-labelledby="h-analytics" hidden>
-    <header class="page-head">
-      <h1 id="h-analytics" tabindex="-1">Analytics</h1>
-      <p>See your spending patterns at a glance.</p>
-    </header>
-
-    <div id="analyticsEmpty" class="empty" hidden></div>
-
-    <div id="analyticsBody">
-      <div class="chart-grid">
-        <article class="card chart-card" aria-labelledby="h-donut">
-          <div class="card-head">
-            <h2 id="h-donut">Spending by category</h2>
-            <label class="inline-select"><span class="sr-only">Month</span><select id="aMonth"></select></label>
-          </div>
-          <div class="donut-wrap">
-            <div class="chart-box donut-box"><canvas id="donutChart" role="img" aria-label="Doughnut chart of spending by category"></canvas></div>
-            <ul class="legend" id="donutLegend"></ul>
-          </div>
-          <p class="chart-fallback" id="donutFallback" hidden>The chart could not load. Check your internet connection and refresh. Your numbers are listed above.</p>
+          <a class="featured-preview" href="pocketnepal/index.html" aria-label="Open PocketNepal">
+            <svg viewBox="0 0 400 260" role="img" aria-label="Preview of PocketNepal: spending summary cards, a category donut chart, a budget bar and a bill split result">
+              <rect width="400" height="260" rx="16" fill="#0b1222"/>
+              <rect x="1" y="1" width="398" height="258" rx="15" fill="none" stroke="rgba(255,255,255,.12)"/>
+              <rect x="16" y="13" width="14" height="14" rx="4" fill="#6366f1"/>
+              <rect x="36" y="16" width="62" height="8" rx="4" fill="rgba(255,255,255,.22)"/>
+              <rect x="316" y="11" width="68" height="18" rx="9" fill="#6366f1"/>
+              <rect x="16" y="38" width="114" height="42" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="143" y="38" width="114" height="42" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="270" y="38" width="114" height="42" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="25" y="47" width="40" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/><rect x="25" y="58" width="60" height="11" rx="3" fill="#a5b4fc"/>
+              <rect x="152" y="47" width="40" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/><rect x="152" y="58" width="48" height="11" rx="3" fill="#a5b4fc"/>
+              <rect x="279" y="47" width="40" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/><rect x="279" y="58" width="54" height="11" rx="3" fill="#a5b4fc"/>
+              <rect x="16" y="90" width="186" height="154" rx="12" fill="#101b33"/>
+              <circle cx="75" cy="168" r="34" fill="none" stroke="#f97316" stroke-width="14" stroke-dasharray="96.8 116.9" stroke-dashoffset="0.0" transform="rotate(-90 75 168)"/><circle cx="75" cy="168" r="34" fill="none" stroke="#eab308" stroke-width="14" stroke-dasharray="34.8 178.8" stroke-dashoffset="-98.3" transform="rotate(-90 75 168)"/><circle cx="75" cy="168" r="34" fill="none" stroke="#14b8a6" stroke-width="14" stroke-dasharray="28.4 185.2" stroke-dashoffset="-134.6" transform="rotate(-90 75 168)"/><circle cx="75" cy="168" r="34" fill="none" stroke="#6366f1" stroke-width="14" stroke-dasharray="47.6 166.0" stroke-dashoffset="-164.5" transform="rotate(-90 75 168)"/>
+              <rect x="64" y="161" width="22" height="7" rx="3.5" fill="rgba(255,255,255,.35)"/><rect x="66" y="172" width="18" height="5" rx="2.5" fill="rgba(255,255,255,.18)"/>
+              <circle cx="128" cy="140" r="4" fill="#f97316"/><rect x="138" y="137" width="48" height="6" rx="3" fill="rgba(255,255,255,.22)"/>
+              <circle cx="128" cy="160" r="4" fill="#eab308"/><rect x="138" y="157" width="38" height="6" rx="3" fill="rgba(255,255,255,.22)"/>
+              <circle cx="128" cy="180" r="4" fill="#14b8a6"/><rect x="138" y="177" width="44" height="6" rx="3" fill="rgba(255,255,255,.22)"/>
+              <circle cx="128" cy="200" r="4" fill="#6366f1"/><rect x="138" y="197" width="34" height="6" rx="3" fill="rgba(255,255,255,.22)"/>
+              <rect x="28" y="222" width="162" height="8" rx="4" fill="rgba(255,255,255,.08)"/>
+              <rect x="28" y="222" width="116" height="8" rx="4" fill="#34d399"/>
+              <rect x="214" y="90" width="170" height="154" rx="12" fill="#101b33"/>
+              <rect x="226" y="102" width="70" height="6" rx="3" fill="rgba(255,255,255,.22)"/>
+              <rect x="226" y="114" width="146" height="40" rx="10" fill="rgba(99,102,241,.22)"/>
+              <rect x="262" y="122" width="74" height="9" rx="3" fill="rgba(255,255,255,.25)"/>
+              <rect x="248" y="136" width="102" height="12" rx="3" fill="#c7d2fe"/>
+              <circle cx="235" cy="172" r="7" fill="#6366f1"/><rect x="248" y="169" width="60" height="6" rx="3" fill="rgba(255,255,255,.22)"/><rect x="334" y="169" width="38" height="6" rx="3" fill="rgba(255,255,255,.4)"/>
+              <circle cx="235" cy="192" r="7" fill="#0ea5e9"/><rect x="248" y="189" width="46" height="6" rx="3" fill="rgba(255,255,255,.22)"/><rect x="334" y="189" width="38" height="6" rx="3" fill="rgba(255,255,255,.4)"/>
+              <circle cx="235" cy="212" r="7" fill="#10b981"/><rect x="248" y="209" width="54" height="6" rx="3" fill="rgba(255,255,255,.22)"/><rect x="334" y="209" width="38" height="6" rx="3" fill="rgba(255,255,255,.4)"/>
+            </svg>
+          </a>
         </article>
 
-        <article class="card chart-card" aria-labelledby="h-bar7">
-          <div class="card-head">
-            <h2 id="h-bar7">Last 7 days</h2>
-            <span class="muted" id="weekTotal"></span>
+        <!-- Featured project: live Nepal weather and flood-risk dashboard -->
+        <article class="project-card project-featured reveal">
+          <div class="featured-body">
+            <div class="project-meta">
+              <span class="live-pill"><span class="live-dot" aria-hidden="true"></span>Live data</span>
+              <span class="project-kind">Data dashboard</span>
+            </div>
+            <h3>Nepal Weather &amp; Flood Risk Monitor</h3>
+            <p>A real-time dashboard for Nepal that pulls live weather and river-discharge forecasts, then classifies flood risk for the country's major river basins on an interactive map. Includes 7-day river-flow charts, rainfall outlooks for key cities, and a transparent risk methodology.</p>
+            <ul class="feature-list">
+              <li>Live weather for 13 cities across the Terai, Hills and Mountains</li>
+              <li>Four river-basin flood risk zones rated Low to Severe</li>
+              <li>Auto-refresh every 10 minutes, responsive on mobile</li>
+            </ul>
+            <ul class="project-tags" aria-label="Technologies used">
+              <li>JavaScript</li><li>REST APIs</li><li>Leaflet</li><li>Data Visualisation</li><li>Responsive UI</li>
+            </ul>
+            <div class="project-links project-links-lg">
+              <a class="btn btn-primary btn-sm-link" href="nepal-flood-monitor.html">Open Live Dashboard</a>
+              <a href="https://github.com/kushalbk07/kushal_portfolio/blob/main/nepal-flood-monitor.html" target="_blank" rel="noopener noreferrer">Source Code &rarr;</a>
+            </div>
           </div>
-          <div class="chart-box bar-box"><canvas id="weekChart" role="img" aria-label="Bar chart of spending over the last 7 days"></canvas></div>
-          <p class="chart-fallback" id="weekFallback" hidden>The chart could not load. Check your internet connection and refresh.</p>
-        </article>
-      </div>
 
-      <article class="card chart-card" aria-labelledby="h-compare">
-        <div class="card-head">
-          <h2 id="h-compare">Monthly comparison</h2>
-          <div class="compare-pick">
-            <label class="inline-select"><span class="sr-only">First month</span><select id="cmpA"></select></label>
-            <span class="muted">vs</span>
-            <label class="inline-select"><span class="sr-only">Second month</span><select id="cmpB"></select></label>
+          <a class="featured-preview" href="nepal-flood-monitor.html" aria-label="Open the Nepal Weather and Flood Risk Monitor">
+            <svg viewBox="0 0 400 260" role="img" aria-label="Preview of the dashboard: risk map with coloured flood zones and a river-flow chart">
+              <rect width="400" height="260" rx="16" fill="#0b1222"/>
+              <rect x="1" y="1" width="398" height="258" rx="15" fill="none" stroke="rgba(255,255,255,.12)"/>
+              <rect x="16" y="14" width="46" height="8" rx="4" fill="rgba(255,255,255,.18)"/>
+              <rect x="326" y="12" width="58" height="12" rx="6" fill="rgba(52,211,153,.18)"/>
+              <circle cx="337" cy="18" r="3" fill="#34d399"/>
+              <rect x="345" y="16" width="32" height="4" rx="2" fill="rgba(52,211,153,.7)"/>
+              <rect x="16" y="34" width="86" height="40" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="110" y="34" width="86" height="40" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="204" y="34" width="86" height="40" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="298" y="34" width="86" height="40" rx="9" fill="rgba(255,255,255,.05)"/>
+              <rect x="24" y="43" width="30" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+              <rect x="24" y="54" width="48" height="10" rx="3" fill="#38bdf8"/>
+              <rect x="118" y="43" width="30" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+              <rect x="118" y="54" width="40" height="10" rx="3" fill="#fb923c"/>
+              <rect x="212" y="43" width="30" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+              <rect x="212" y="54" width="52" height="10" rx="3" fill="#818cf8"/>
+              <rect x="306" y="43" width="30" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+              <rect x="306" y="54" width="44" height="10" rx="3" fill="#34d399"/>
+              <rect x="16" y="84" width="226" height="160" rx="12" fill="#101b33"/>
+              <g stroke="rgba(255,255,255,.05)">
+                <path d="M16 124H242M16 164H242M16 204H242M72 84V244M128 84V244M184 84V244"/>
+              </g>
+              <circle cx="78" cy="196" r="22" fill="#f87171" fill-opacity=".25" stroke="#f87171" stroke-width="1.5"/>
+              <circle cx="126" cy="172" r="19" fill="#fb923c" fill-opacity=".25" stroke="#fb923c" stroke-width="1.5"/>
+              <circle cx="176" cy="146" r="21" fill="#fbbf24" fill-opacity=".22" stroke="#fbbf24" stroke-width="1.5"/>
+              <circle cx="222" cy="120" r="17" fill="#34d399" fill-opacity=".22" stroke="#34d399" stroke-width="1.5"/>
+              <rect x="56" y="188" width="44" height="16" rx="8" fill="#0f172a" stroke="#f87171" stroke-width="1.5"/>
+              <rect x="108" y="150" width="36" height="16" rx="8" fill="#0f172a" stroke="#fb923c" stroke-width="1.5"/>
+              <rect x="154" y="122" width="44" height="16" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5"/>
+              <rect x="190" y="164" width="36" height="16" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1.5"/>
+              <rect x="254" y="84" width="130" height="76" rx="12" fill="#101b33"/>
+              <polyline points="266,140 288,134 310,138 332,120 354,106 374,98" fill="none" stroke="#fb923c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="374" cy="98" r="4" fill="#fb923c" stroke="#0b1222" stroke-width="2"/>
+              <rect x="266" y="94" width="40" height="5" rx="2.5" fill="rgba(255,255,255,.22)"/>
+              <rect x="254" y="168" width="130" height="34" rx="10" fill="#101b33"/>
+              <rect x="266" y="179" width="52" height="6" rx="3" fill="rgba(255,255,255,.2)"/>
+              <rect x="342" y="177" width="30" height="12" rx="6" fill="rgba(248,113,113,.2)"/>
+              <rect x="254" y="210" width="130" height="34" rx="10" fill="#101b33"/>
+              <rect x="266" y="221" width="64" height="6" rx="3" fill="rgba(255,255,255,.2)"/>
+              <rect x="342" y="219" width="30" height="12" rx="6" fill="rgba(52,211,153,.2)"/>
+            </svg>
+          </a>
+        </article>
+
+        <article class="project-card reveal">
+          <div class="project-icon" aria-hidden="true">🥟</div>
+          <h3>Momo Hub</h3>
+          <p>A specialised e-commerce platform for ordering authentic varieties of momos, with a simple menu and an easy ordering flow.</p>
+          <ul class="project-tags" aria-label="Technologies used">
+            <li>HTML</li><li>CSS</li><li>JavaScript</li>
+          </ul>
+          <div class="project-links">
+            <!-- Add your links here, then remove these comment markers:
+            <a href="LIVE_DEMO_URL" target="_blank" rel="noopener noreferrer">Live Demo &rarr;</a>
+            <a href="https://github.com/kushalbk07/REPO_NAME" target="_blank" rel="noopener noreferrer">Source Code &rarr;</a>
+            -->
           </div>
-        </div>
-        <p class="compare-sentence" id="compareSentence" aria-live="polite"></p>
-        <div class="compare-totals" id="compareTotals"></div>
-        <div class="chart-box compare-box"><canvas id="compareChart" role="img" aria-label="Grouped bar chart comparing two months by category"></canvas></div>
-        <p class="chart-fallback" id="compareFallback" hidden>The chart could not load. Check your internet connection and refresh.</p>
-      </article>
+        </article>
+
+        <article class="project-card reveal">
+          <div class="project-icon" aria-hidden="true">🛍️</div>
+          <h3>Sathi Collection</h3>
+          <p>A modern e-commerce storefront designed for fashion and retail collections, focused on clean product browsing.</p>
+          <ul class="project-tags" aria-label="Technologies used">
+            <li>Web Design</li><li>UI/UX</li><li>E-commerce</li>
+          </ul>
+          <div class="project-links">
+            <!-- Add your links here, then remove these comment markers:
+            <a href="LIVE_DEMO_URL" target="_blank" rel="noopener noreferrer">Live Demo &rarr;</a>
+            <a href="https://github.com/kushalbk07/REPO_NAME" target="_blank" rel="noopener noreferrer">Source Code &rarr;</a>
+            -->
+          </div>
+        </article>
+
+        <!--
+          TEMPLATE: copy this whole block to add a new project, then fill it in.
+
+        <article class="project-card reveal">
+          <div class="project-icon" aria-hidden="true">🚀</div>
+          <h3>Project Name</h3>
+          <p>One or two sentences: what it does and who it is for.</p>
+          <ul class="project-tags" aria-label="Technologies used">
+            <li>HTML</li><li>CSS</li><li>JavaScript</li>
+          </ul>
+          <div class="project-links">
+            <a href="LIVE_DEMO_URL" target="_blank" rel="noopener noreferrer">Live Demo &rarr;</a>
+            <a href="https://github.com/kushalbk07/REPO_NAME" target="_blank" rel="noopener noreferrer">Source Code &rarr;</a>
+          </div>
+        </article>
+        -->
+
+        <article class="project-card project-card-soon reveal">
+          <div class="project-icon" aria-hidden="true">✨</div>
+          <h3>More coming soon</h3>
+          <p>I'm always building something new. Follow my work on GitHub to see what's next.</p>
+          <div class="project-links">
+            <a href="https://github.com/kushalbk07" target="_blank" rel="noopener noreferrer">Visit my GitHub &rarr;</a>
+          </div>
+        </article>
+
+      </div>
     </div>
   </section>
 
-  <!-- ================= SETTINGS ================= -->
-  <section class="view" id="view-settings" aria-labelledby="h-settings" hidden>
-    <header class="page-head">
-      <h1 id="h-settings" tabindex="-1">Settings</h1>
-      <p>Everything is saved in this browser. Nothing is uploaded anywhere.</p>
-    </header>
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="eyebrow">Get In Touch</span>
+        <h2>Let's Work Together</h2>
+        <p class="section-sub">Have a project in mind or just want to say hello? Send me a message and I'll get back to you.</p>
+      </div>
 
-    <div class="settings-grid">
-      <article class="card" aria-labelledby="h-set-look">
-        <h2 id="h-set-look">Appearance</h2>
-        <div class="setting-row">
-          <div>
-            <strong>Dark mode</strong>
-            <p class="muted">Easier on the eyes at night.</p>
+      <div class="contact-container reveal">
+        <form class="glass-form" id="contactForm" novalidate>
+          <div class="input-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" required>
           </div>
-          <button type="button" class="switch" id="darkSwitch" role="switch" aria-checked="false" aria-label="Dark mode"><span class="switch-knob"></span></button>
-        </div>
-      </article>
-
-      <article class="card" aria-labelledby="h-set-budget">
-        <h2 id="h-set-budget">Monthly budget</h2>
-        <form id="settingsBudgetForm" novalidate>
-          <div class="field">
-            <label for="setBudget">Budget per month (Rs.)</label>
-            <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
-              <input type="number" id="setBudget" inputmode="decimal" min="0" step="1" placeholder="25000" aria-describedby="setBudgetErr">
-            </div>
-            <p class="field-error" id="setBudgetErr" role="alert"></p>
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
           </div>
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Save budget</button>
-            <button type="button" class="btn btn-ghost" id="removeBudgetBtn">Remove budget</button>
+          <div class="input-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Tell me about your project..." rows="5" required></textarea>
           </div>
+          <button type="submit" class="submit-btn">Send Message</button>
+          <p class="form-note" id="formNote" role="status" aria-live="polite"></p>
         </form>
-      </article>
 
-      <article class="card" aria-labelledby="h-set-data">
-        <h2 id="h-set-data">Your data</h2>
-        <div class="setting-row">
-          <div>
-            <strong>Export data</strong>
-            <p class="muted">Download all expenses as a CSV file that opens in Excel or Google Sheets.</p>
-          </div>
-          <button type="button" class="btn btn-secondary" id="exportBtn"><svg class="ico"><use href="#i-download"/></svg> Export CSV</button>
-        </div>
-        <div class="setting-row" id="sampleRow">
-          <div>
-            <strong id="sampleTitle">Sample data</strong>
-            <p class="muted" id="sampleText"></p>
-          </div>
-          <button type="button" class="btn btn-secondary" id="sampleBtn"></button>
-        </div>
-        <div class="setting-row danger-zone">
-          <div>
-            <strong>Clear all data</strong>
-            <p class="muted">Permanently deletes expenses, budget and bill history from this browser.</p>
-          </div>
-          <button type="button" class="btn btn-danger" id="clearAllBtn"><svg class="ico"><use href="#i-trash"/></svg> Clear all data</button>
-        </div>
-      </article>
-
-      <article class="card" aria-labelledby="h-set-about">
-        <h2 id="h-set-about">About PocketNepal</h2>
-        <p class="muted">PocketNepal is a free tool for tracking spending and splitting bills in Nepali Rupees. It runs entirely in your browser: no account, no server, no tracking. Clearing your browser data will also remove your PocketNepal data, so export a CSV now and then.</p>
-        <p class="muted">Insights are simple calculations on your own entries. They are not professional financial advice.</p>
-      </article>
+        <p class="contact-direct">
+          Or email me directly at
+          <a href="mailto:kushalbk2002@gmail.com">kushalbk2002@gmail.com</a>
+        </p>
+      </div>
     </div>
   </section>
 
 </main>
 
-<footer class="site-footer">
-  <p>© <span id="year">2026</span> PocketNepal · Built by Kushal BK · Your data stays on your device · <a href="../index.html">Back to portfolio</a></p>
+<footer>
+  <div class="container footer-inner">
+    <p>&copy; <span id="year">2026</span> Kushal BK. All rights reserved.</p>
+    <ul class="footer-links">
+      <li><a href="https://github.com/kushalbk07" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <li><a href="mailto:kushalbk2002@gmail.com">Email</a></li>
+      <li><a href="#home">Back to top &uarr;</a></li>
+    </ul>
+  </div>
 </footer>
 
-<!-- Mobile bottom tab bar -->
-<nav class="tabbar" aria-label="Main (mobile)">
-  <a href="#dashboard" data-nav="dashboard"><svg class="ico"><use href="#i-dashboard"/></svg><span>Dashboard</span></a>
-  <a href="#splitter" data-nav="splitter"><svg class="ico"><use href="#i-split"/></svg><span>Split</span></a>
-  <a href="#expenses" data-nav="expenses"><svg class="ico"><use href="#i-wallet"/></svg><span>Expenses</span></a>
-  <a href="#analytics" data-nav="analytics"><svg class="ico"><use href="#i-chart"/></svg><span>Analytics</span></a>
-  <a href="#settings" data-nav="settings"><svg class="ico"><use href="#i-settings"/></svg><span>Settings</span></a>
-</nav>
+<!-- Sniper-scope cursor and bullet-hole effect -->
+<div class="scope" id="scope" aria-hidden="true">
+  <div class="scope-inner">
+    <svg viewBox="0 0 120 120" width="100%" height="100%" fill="none" stroke="currentColor">
+      <circle cx="60" cy="60" r="46" stroke-width="1.5"/>
+      <circle cx="60" cy="60" r="30" stroke-width="0.8" opacity=".55"/>
+      <path d="M60 2V40M60 80V118M2 60H40M80 60H118" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M60 14v6M60 100v6M14 60h6M100 60h6" stroke-width="1.2" opacity=".7"/>
+      <circle cx="42" cy="60" r="1.3" fill="currentColor" stroke="none" opacity=".7"/>
+      <circle cx="78" cy="60" r="1.3" fill="currentColor" stroke="none" opacity=".7"/>
+      <circle cx="60" cy="42" r="1.3" fill="currentColor" stroke="none" opacity=".7"/>
+      <circle cx="60" cy="78" r="1.3" fill="currentColor" stroke="none" opacity=".7"/>
+      <circle class="scope-dot" cx="60" cy="60" r="2.8" fill="#ef4444" stroke="none"/>
+    </svg>
+  </div>
+</div>
+<div class="shots" id="shots" aria-hidden="true"></div>
+<button class="scope-toggle" id="scopeToggle" type="button" aria-pressed="true" title="Turn the sniper-scope cursor on or off">
+  <span aria-hidden="true">◎</span> <span id="scopeToggleText">Scope: On</span>
+</button>
 
-<button type="button" class="fab" data-action="add-expense" aria-label="Add expense"><svg class="ico"><use href="#i-plus"/></svg></button>
-
-<!-- ================= DIALOGS ================= -->
-<dialog id="expenseDialog" aria-labelledby="expenseDialogTitle">
-  <form id="expenseForm" novalidate method="dialog">
-    <div class="dlg-head">
-      <h2 id="expenseDialogTitle">Add expense</h2>
-      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-x"/></svg></button>
-    </div>
-    <div class="dlg-body">
-      <div class="field">
-        <label for="eAmount">Amount (Rs.)</label>
-        <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
-          <input type="number" id="eAmount" inputmode="decimal" min="0.01" step="0.01" placeholder="350" aria-describedby="eAmountErr" required>
-        </div>
-        <p class="field-error" id="eAmountErr" role="alert"></p>
-      </div>
-      <fieldset class="field cat-field">
-        <legend>Category</legend>
-        <div class="cat-grid" id="eCatGrid"></div>
-        <p class="field-error" id="eCatErr" role="alert"></p>
-      </fieldset>
-      <div class="field">
-        <label for="eDesc">Description</label>
-        <input type="text" id="eDesc" maxlength="80" placeholder="e.g. Lunch with friends" aria-describedby="eDescErr" required>
-        <p class="field-error" id="eDescErr" role="alert"></p>
-      </div>
-      <div class="field">
-        <label for="eDate">Date</label>
-        <input type="date" id="eDate" aria-describedby="eDateErr" required>
-        <p class="field-error" id="eDateErr" role="alert"></p>
-      </div>
-    </div>
-    <div class="dlg-foot">
-      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
-      <button type="submit" class="btn btn-primary" id="expenseSubmit">Add expense</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="budgetDialog" aria-labelledby="budgetDialogTitle">
-  <form id="budgetForm" novalidate method="dialog">
-    <div class="dlg-head">
-      <h2 id="budgetDialogTitle">Monthly budget</h2>
-      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-x"/></svg></button>
-    </div>
-    <div class="dlg-body">
-      <div class="field">
-        <label for="bAmount">How much do you want to spend per month? (Rs.)</label>
-        <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
-          <input type="number" id="bAmount" inputmode="decimal" min="1" step="1" placeholder="25000" aria-describedby="bAmountErr">
-        </div>
-        <p class="field-error" id="bAmountErr" role="alert"></p>
-      </div>
-    </div>
-    <div class="dlg-foot">
-      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
-      <button type="submit" class="btn btn-primary">Save budget</button>
-    </div>
-  </form>
-</dialog>
-
-<dialog id="confirmDialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
-  <form method="dialog" id="confirmForm">
-    <div class="dlg-head"><h2 id="confirmTitle">Are you sure?</h2></div>
-    <div class="dlg-body"><p id="confirmText"></p></div>
-    <div class="dlg-foot">
-      <button type="button" class="btn btn-ghost" id="confirmCancel">Cancel</button>
-      <button type="button" class="btn btn-danger" id="confirmOk">Delete</button>
-    </div>
-  </form>
-</dialog>
-
-<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
-
-<noscript><p class="noscript">PocketNepal needs JavaScript to run. Please enable it in your browser.</p></noscript>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
-<script src="script.js"></script>
+<script src="script.js" defer></script>
 </body>
 </html>
