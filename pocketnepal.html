@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PocketNepal | Expense tracker and bill splitter</title>
+  <meta name="description" content="PocketNepal helps you track where your money goes and split bills with friends. Free, private, works in Nepali Rupees. Your data stays in your browser.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%234f46e5'/%3E%3Cpath d='M5 24 12 11l4.5 7 3-4L27 24z' fill='%23fff'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    /* Apply the saved theme before the page paints, so there is no flash of the wrong colours */
+    (function () {
+      try {
+        var prefs = JSON.parse(localStorage.getItem('pocketnepal.prefs') || '{}');
+        var theme = prefs.theme || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
+    })();
+  </script>
+</head>
+<body>
+
+<!-- Icon sprite: every icon on the page is drawn from here -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="15" rx="3"/><path d="M2 10h20"/><path d="M16 15h2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+</svg>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ================= HEADER ================= -->
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="#dashboard" data-nav aria-label="PocketNepal home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="9" fill="currentColor"/><path d="M5 24 12 11l4.5 7 3-4L27 24z" fill="#fff"/></svg>
+      </span>
+      <span class="brand-name">Pocket<b>Nepal</b></span>
+    </a>
+
+    <nav class="main-nav" aria-label="Main">
+      <a href="#dashboard" data-nav="dashboard"><svg class="ico"><use href="#i-dashboard"/></svg><span>Dashboard</span></a>
+      <a href="#splitter" data-nav="splitter"><svg class="ico"><use href="#i-split"/></svg><span>Bill Splitter</span></a>
+      <a href="#expenses" data-nav="expenses"><svg class="ico"><use href="#i-wallet"/></svg><span>Expenses</span></a>
+      <a href="#analytics" data-nav="analytics"><svg class="ico"><use href="#i-chart"/></svg><span>Analytics</span></a>
+      <a href="#settings" data-nav="settings"><svg class="ico"><use href="#i-settings"/></svg><span>Settings</span></a>
+    </nav>
+
+    <div class="header-actions">
+      <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to dark mode" title="Switch theme">
+        <svg class="ico ico-moon"><use href="#i-moon"/></svg>
+        <svg class="ico ico-sun"><use href="#i-sun"/></svg>
+      </button>
+      <button type="button" class="btn btn-primary header-add" data-action="add-expense">
+        <svg class="ico"><use href="#i-plus"/></svg><span>Add expense</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="app" tabindex="-1">
+
+  <!-- ================= DASHBOARD (landing + overview) ================= -->
+  <section class="view" id="view-dashboard" aria-labelledby="h-dashboard" hidden>
+
+    <div class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Free · Private · Made for Nepal</span>
+        <h1 id="h-dashboard" tabindex="-1">Know where your money goes.</h1>
+        <p class="hero-sub">Track expenses. Split bills. Stay within budget.</p>
+        <div class="hero-buttons">
+          <button type="button" class="btn btn-primary btn-lg" data-action="add-expense">Track My Spending</button>
+          <a href="#splitter" class="btn btn-secondary btn-lg" data-nav>Split a Bill</a>
+        </div>
+        <p class="hero-note"><svg class="ico"><use href="#i-shield"/></svg> No sign-up. Your data never leaves this browser.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 420 260" role="presentation">
+          <defs>
+            <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--art-sky-1)"/><stop offset="1" stop-color="var(--art-sky-2)"/></linearGradient>
+          </defs>
+          <rect width="420" height="260" rx="28" fill="url(#skyG)"/>
+          <circle cx="318" cy="74" r="30" fill="var(--art-sun)"/>
+          <text x="318" y="83" text-anchor="middle" font-size="26" font-weight="800" fill="var(--art-sun-text)" font-family="Inter, system-ui, sans-serif">Rs</text>
+          <path d="M0 190 L70 98 L112 150 L168 70 L246 176 L296 126 L420 210 L420 260 L0 260 Z" fill="var(--art-peak-far)"/>
+          <path d="M0 220 L88 134 L140 186 L214 112 L300 214 L350 168 L420 226 L420 260 L0 260 Z" fill="var(--art-peak-near)"/>
+          <path d="M168 70 L186 94 L172 90 L160 100 L148 88 Z" fill="#fff" opacity=".85"/>
+          <path d="M214 112 L228 132 L216 128 L205 136 L198 124 Z" fill="#fff" opacity=".8"/>
+          <rect x="34" y="28" width="116" height="52" rx="14" fill="var(--surface)" opacity=".95"/>
+          <rect x="46" y="40" width="46" height="8" rx="4" fill="var(--muted)" opacity=".5"/>
+          <rect x="46" y="55" width="76" height="12" rx="6" fill="var(--primary)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-strip" aria-label="Your totals so far">
+      <div class="strip-item"><span class="strip-num" id="stripBills" data-count="0">0</span><span class="strip-label">Bills Split</span></div>
+      <div class="strip-item"><span class="strip-num" id="stripMoney" data-count="0" data-money="1">Rs. 0</span><span class="strip-label">Money Tracked</span></div>
+      <div class="strip-item"><span class="strip-num" id="stripCount" data-count="0">0</span><span class="strip-label">Expenses Recorded</span></div>
+    </div>
+
+    <div class="section-head">
+      <h2>This month</h2>
+      <span class="muted" id="dashMonthLabel"></span>
+    </div>
+
+    <div class="kpi-grid">
+      <article class="kpi-card">
+        <span class="kpi-label">Total Spent This Month</span>
+        <strong class="kpi-value" id="kpiMonth">Rs. 0</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Today's Spending</span>
+        <strong class="kpi-value" id="kpiToday">Rs. 0</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Largest Expense</span>
+        <strong class="kpi-value" id="kpiLargest">Rs. 0</strong>
+        <span class="kpi-sub" id="kpiLargestSub"></span>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">Number of Expenses</span>
+        <strong class="kpi-value" id="kpiCount">0</strong>
+      </article>
+    </div>
+
+    <div class="dash-grid">
+      <article class="card budget-card" aria-labelledby="h-budget">
+        <div class="card-head">
+          <h2 id="h-budget">Monthly budget</h2>
+          <button type="button" class="btn btn-ghost btn-sm" id="budgetEditBtn" data-action="edit-budget">Set budget</button>
+        </div>
+        <div id="budgetBody"></div>
+      </article>
+
+      <article class="card" aria-labelledby="h-insights">
+        <div class="card-head"><h2 id="h-insights">Smart insights</h2></div>
+        <ul class="insight-list" id="insightList"></ul>
+        <p class="fine-print">Friendly observations based on your own entries. Not financial advice.</p>
+      </article>
+
+      <article class="card" aria-labelledby="h-topcats">
+        <div class="card-head"><h2 id="h-topcats">Top categories</h2></div>
+        <div id="topCats"></div>
+      </article>
+
+      <article class="card" aria-labelledby="h-recent">
+        <div class="card-head">
+          <h2 id="h-recent">Recent expenses</h2>
+          <a href="#expenses" class="link-arrow" data-nav>View all <svg class="ico"><use href="#i-arrow"/></svg></a>
+        </div>
+        <ul class="exp-list compact" id="recentList"></ul>
+        <div id="recentEmpty" class="empty" hidden></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= BILL SPLITTER ================= -->
+  <section class="view" id="view-splitter" aria-labelledby="h-splitter" hidden>
+    <header class="page-head">
+      <h1 id="h-splitter" tabindex="-1">Smart Bill Splitter</h1>
+      <p>Split a restaurant bill, trip, rent or groceries fairly, then see exactly who owes whom.</p>
+    </header>
+
+    <div class="split-layout">
+      <form class="card split-form" id="splitForm" novalidate autocomplete="off">
+        <div class="seg" role="group" aria-label="How to split">
+          <button type="button" class="seg-btn" data-mode="equal" aria-pressed="true">Split equally</button>
+          <button type="button" class="seg-btn" data-mode="custom" aria-pressed="false">Custom amounts</button>
+          <button type="button" class="seg-btn" data-mode="settle" aria-pressed="false">Who owes whom</button>
+        </div>
+        <p class="mode-help" id="modeHelp"></p>
+
+        <div class="field">
+          <label for="splitTitle">What is this for? <span class="optional">optional</span></label>
+          <input type="text" id="splitTitle" maxlength="60" placeholder="e.g. Dinner at Thamel">
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="splitTotal">Total bill (Rs.)</label>
+            <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
+              <input type="number" id="splitTotal" inputmode="decimal" min="0" step="0.01" placeholder="2500" aria-describedby="splitTotalErr">
+            </div>
+            <p class="field-error" id="splitTotalErr" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="splitTip">Tip (%)</label>
+            <div class="input-affix"><input type="number" id="splitTip" inputmode="decimal" min="0" max="100" step="0.5" value="0" aria-describedby="splitTipErr"><span class="affix affix-end" aria-hidden="true">%</span></div>
+            <p class="field-error" id="splitTipErr" role="alert"></p>
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="Quick tip">
+          <button type="button" class="chip" data-tip="0">No tip</button>
+          <button type="button" class="chip" data-tip="5">5%</button>
+          <button type="button" class="chip" data-tip="10">10%</button>
+          <button type="button" class="chip" data-tip="13">13% service + VAT</button>
+          <button type="button" class="chip" data-tip="15">15%</button>
+        </div>
+
+        <div class="field">
+          <label for="peopleCount">Number of people</label>
+          <div class="stepper">
+            <button type="button" class="icon-btn" id="peopleMinus" aria-label="Remove one person"><svg class="ico"><use href="#i-minus"/></svg></button>
+            <input type="number" id="peopleCount" inputmode="numeric" min="2" max="20" step="1" value="2" aria-describedby="peopleErr">
+            <button type="button" class="icon-btn" id="peoplePlus" aria-label="Add one person"><svg class="ico"><use href="#i-plus"/></svg></button>
+          </div>
+          <p class="field-error" id="peopleErr" role="alert"></p>
+        </div>
+
+        <div class="field" id="settleSharesBox" hidden>
+          <span class="label-like" id="settleSharesLabel">How are the shares decided?</span>
+          <div class="chips" role="group" aria-labelledby="settleSharesLabel">
+            <button type="button" class="chip" data-shares="equal" aria-pressed="true">Everyone owes the same</button>
+            <button type="button" class="chip" data-shares="custom" aria-pressed="false">Custom shares</button>
+          </div>
+        </div>
+
+        <div class="people-head">
+          <h2>People</h2>
+          <div class="people-tools">
+            <button type="button" class="btn btn-ghost btn-sm" id="fillEqualBtn" hidden>Fill equally</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="addPersonBtn"><svg class="ico"><use href="#i-plus"/></svg> Add person</button>
+          </div>
+        </div>
+        <ul class="people-list" id="peopleList"></ul>
+        <p class="custom-tally" id="customTally" aria-live="polite" hidden></p>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="splitResetBtn"><svg class="ico"><use href="#i-reset"/></svg> Reset</button>
+        </div>
+      </form>
+
+      <aside class="card split-result" id="splitResult" aria-live="polite" aria-labelledby="h-result">
+        <h2 id="h-result">Result</h2>
+        <div id="splitResultBody"></div>
+        <div class="result-actions" id="resultActions" hidden>
+          <button type="button" class="btn btn-secondary" id="copyBtn"><svg class="ico"><use href="#i-copy"/></svg> Copy results</button>
+          <button type="button" class="btn btn-secondary" id="shareBtn"><svg class="ico"><use href="#i-share"/></svg> Share</button>
+          <button type="button" class="btn btn-primary" id="saveBillBtn"><svg class="ico"><use href="#i-save"/></svg> Save to history</button>
+        </div>
+      </aside>
+    </div>
+
+    <section class="card history-card" aria-labelledby="h-history">
+      <div class="card-head">
+        <h2 id="h-history">Bill history <span class="count-pill" id="historyCount">0</span></h2>
+        <button type="button" class="btn btn-danger-ghost btn-sm" id="clearHistoryBtn"><svg class="ico"><use href="#i-trash"/></svg> Delete bill history</button>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+      <div id="historyEmpty" class="empty small" hidden>
+        <p><strong>No saved bills yet.</strong></p>
+        <p>Work out a split above, then press “Save to history” to keep it here.</p>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= EXPENSES ================= -->
+  <section class="view" id="view-expenses" aria-labelledby="h-expenses" hidden>
+    <header class="page-head page-head-row">
+      <div>
+        <h1 id="h-expenses" tabindex="-1">Where did my money go?</h1>
+        <p>Every expense you have recorded, in one place.</p>
+      </div>
+      <button type="button" class="btn btn-primary" data-action="add-expense"><svg class="ico"><use href="#i-plus"/></svg> Add expense</button>
+    </header>
+
+    <div class="card filter-card" id="filterCard">
+      <div class="filter-grid">
+        <div class="field search-field">
+          <label for="fSearch">Search</label>
+          <div class="input-affix"><svg class="ico affix-ico" aria-hidden="true"><use href="#i-search"/></svg>
+            <input type="search" id="fSearch" placeholder="Search description or category" class="has-ico">
+          </div>
+        </div>
+        <div class="field">
+          <label for="fCat">Category</label>
+          <select id="fCat"></select>
+        </div>
+        <div class="field">
+          <label for="fFrom">From</label>
+          <input type="date" id="fFrom">
+        </div>
+        <div class="field">
+          <label for="fTo">To</label>
+          <input type="date" id="fTo">
+        </div>
+        <div class="field">
+          <label for="fSort">Sort by</label>
+          <select id="fSort">
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="amount-desc">Amount: high to low</option>
+            <option value="amount-asc">Amount: low to high</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-foot">
+        <p class="muted" id="filterSummary" aria-live="polite"></p>
+        <button type="button" class="btn btn-ghost btn-sm" id="clearFiltersBtn">Clear filters</button>
+      </div>
+    </div>
+
+    <ul class="exp-list" id="expList"></ul>
+    <div id="expEmpty" class="empty" hidden></div>
+    <div class="more-wrap"><button type="button" class="btn btn-secondary" id="moreBtn" hidden>Show more</button></div>
+  </section>
+
+  <!-- ================= ANALYTICS ================= -->
+  <section class="view" id="view-analytics" aria-labelledby="h-analytics" hidden>
+    <header class="page-head">
+      <h1 id="h-analytics" tabindex="-1">Analytics</h1>
+      <p>See your spending patterns at a glance.</p>
+    </header>
+
+    <div id="analyticsEmpty" class="empty" hidden></div>
+
+    <div id="analyticsBody">
+      <div class="chart-grid">
+        <article class="card chart-card" aria-labelledby="h-donut">
+          <div class="card-head">
+            <h2 id="h-donut">Spending by category</h2>
+            <label class="inline-select"><span class="sr-only">Month</span><select id="aMonth"></select></label>
+          </div>
+          <div class="donut-wrap">
+            <div class="chart-box donut-box"><canvas id="donutChart" role="img" aria-label="Doughnut chart of spending by category"></canvas></div>
+            <ul class="legend" id="donutLegend"></ul>
+          </div>
+          <p class="chart-fallback" id="donutFallback" hidden>The chart could not load. Check your internet connection and refresh. Your numbers are listed above.</p>
+        </article>
+
+        <article class="card chart-card" aria-labelledby="h-bar7">
+          <div class="card-head">
+            <h2 id="h-bar7">Last 7 days</h2>
+            <span class="muted" id="weekTotal"></span>
+          </div>
+          <div class="chart-box bar-box"><canvas id="weekChart" role="img" aria-label="Bar chart of spending over the last 7 days"></canvas></div>
+          <p class="chart-fallback" id="weekFallback" hidden>The chart could not load. Check your internet connection and refresh.</p>
+        </article>
+      </div>
+
+      <article class="card chart-card" aria-labelledby="h-compare">
+        <div class="card-head">
+          <h2 id="h-compare">Monthly comparison</h2>
+          <div class="compare-pick">
+            <label class="inline-select"><span class="sr-only">First month</span><select id="cmpA"></select></label>
+            <span class="muted">vs</span>
+            <label class="inline-select"><span class="sr-only">Second month</span><select id="cmpB"></select></label>
+          </div>
+        </div>
+        <p class="compare-sentence" id="compareSentence" aria-live="polite"></p>
+        <div class="compare-totals" id="compareTotals"></div>
+        <div class="chart-box compare-box"><canvas id="compareChart" role="img" aria-label="Grouped bar chart comparing two months by category"></canvas></div>
+        <p class="chart-fallback" id="compareFallback" hidden>The chart could not load. Check your internet connection and refresh.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="view" id="view-settings" aria-labelledby="h-settings" hidden>
+    <header class="page-head">
+      <h1 id="h-settings" tabindex="-1">Settings</h1>
+      <p>Everything is saved in this browser. Nothing is uploaded anywhere.</p>
+    </header>
+
+    <div class="settings-grid">
+      <article class="card" aria-labelledby="h-set-look">
+        <h2 id="h-set-look">Appearance</h2>
+        <div class="setting-row">
+          <div>
+            <strong>Dark mode</strong>
+            <p class="muted">Easier on the eyes at night.</p>
+          </div>
+          <button type="button" class="switch" id="darkSwitch" role="switch" aria-checked="false" aria-label="Dark mode"><span class="switch-knob"></span></button>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="h-set-budget">
+        <h2 id="h-set-budget">Monthly budget</h2>
+        <form id="settingsBudgetForm" novalidate>
+          <div class="field">
+            <label for="setBudget">Budget per month (Rs.)</label>
+            <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
+              <input type="number" id="setBudget" inputmode="decimal" min="0" step="1" placeholder="25000" aria-describedby="setBudgetErr">
+            </div>
+            <p class="field-error" id="setBudgetErr" role="alert"></p>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save budget</button>
+            <button type="button" class="btn btn-ghost" id="removeBudgetBtn">Remove budget</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="card" aria-labelledby="h-set-data">
+        <h2 id="h-set-data">Your data</h2>
+        <div class="setting-row">
+          <div>
+            <strong>Export data</strong>
+            <p class="muted">Download all expenses as a CSV file that opens in Excel or Google Sheets.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="exportBtn"><svg class="ico"><use href="#i-download"/></svg> Export CSV</button>
+        </div>
+        <div class="setting-row" id="sampleRow">
+          <div>
+            <strong id="sampleTitle">Sample data</strong>
+            <p class="muted" id="sampleText"></p>
+          </div>
+          <button type="button" class="btn btn-secondary" id="sampleBtn"></button>
+        </div>
+        <div class="setting-row danger-zone">
+          <div>
+            <strong>Clear all data</strong>
+            <p class="muted">Permanently deletes expenses, budget and bill history from this browser.</p>
+          </div>
+          <button type="button" class="btn btn-danger" id="clearAllBtn"><svg class="ico"><use href="#i-trash"/></svg> Clear all data</button>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="h-set-about">
+        <h2 id="h-set-about">About PocketNepal</h2>
+        <p class="muted">PocketNepal is a free tool for tracking spending and splitting bills in Nepali Rupees. It runs entirely in your browser: no account, no server, no tracking. Clearing your browser data will also remove your PocketNepal data, so export a CSV now and then.</p>
+        <p class="muted">Insights are simple calculations on your own entries. They are not professional financial advice.</p>
+      </article>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p>© <span id="year">2026</span> PocketNepal · Built by Kushal BK · Your data stays on your device · <a href="../index.html">Back to portfolio</a></p>
+</footer>
+
+<!-- Mobile bottom tab bar -->
+<nav class="tabbar" aria-label="Main (mobile)">
+  <a href="#dashboard" data-nav="dashboard"><svg class="ico"><use href="#i-dashboard"/></svg><span>Dashboard</span></a>
+  <a href="#splitter" data-nav="splitter"><svg class="ico"><use href="#i-split"/></svg><span>Split</span></a>
+  <a href="#expenses" data-nav="expenses"><svg class="ico"><use href="#i-wallet"/></svg><span>Expenses</span></a>
+  <a href="#analytics" data-nav="analytics"><svg class="ico"><use href="#i-chart"/></svg><span>Analytics</span></a>
+  <a href="#settings" data-nav="settings"><svg class="ico"><use href="#i-settings"/></svg><span>Settings</span></a>
+</nav>
+
+<button type="button" class="fab" data-action="add-expense" aria-label="Add expense"><svg class="ico"><use href="#i-plus"/></svg></button>
+
+<!-- ================= DIALOGS ================= -->
+<dialog id="expenseDialog" aria-labelledby="expenseDialogTitle">
+  <form id="expenseForm" novalidate method="dialog">
+    <div class="dlg-head">
+      <h2 id="expenseDialogTitle">Add expense</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="eAmount">Amount (Rs.)</label>
+        <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
+          <input type="number" id="eAmount" inputmode="decimal" min="0.01" step="0.01" placeholder="350" aria-describedby="eAmountErr" required>
+        </div>
+        <p class="field-error" id="eAmountErr" role="alert"></p>
+      </div>
+      <fieldset class="field cat-field">
+        <legend>Category</legend>
+        <div class="cat-grid" id="eCatGrid"></div>
+        <p class="field-error" id="eCatErr" role="alert"></p>
+      </fieldset>
+      <div class="field">
+        <label for="eDesc">Description</label>
+        <input type="text" id="eDesc" maxlength="80" placeholder="e.g. Lunch with friends" aria-describedby="eDescErr" required>
+        <p class="field-error" id="eDescErr" role="alert"></p>
+      </div>
+      <div class="field">
+        <label for="eDate">Date</label>
+        <input type="date" id="eDate" aria-describedby="eDateErr" required>
+        <p class="field-error" id="eDateErr" role="alert"></p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary" id="expenseSubmit">Add expense</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="budgetDialog" aria-labelledby="budgetDialogTitle">
+  <form id="budgetForm" novalidate method="dialog">
+    <div class="dlg-head">
+      <h2 id="budgetDialogTitle">Monthly budget</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close"><svg class="ico"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <div class="field">
+        <label for="bAmount">How much do you want to spend per month? (Rs.)</label>
+        <div class="input-affix"><span class="affix" aria-hidden="true">Rs.</span>
+          <input type="number" id="bAmount" inputmode="decimal" min="1" step="1" placeholder="25000" aria-describedby="bAmountErr">
+        </div>
+        <p class="field-error" id="bAmountErr" role="alert"></p>
+      </div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">Save budget</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirmDialog" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+  <form method="dialog" id="confirmForm">
+    <div class="dlg-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+    <div class="dlg-body"><p id="confirmText"></p></div>
+    <div class="dlg-foot">
+      <button type="button" class="btn btn-ghost" id="confirmCancel">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmOk">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<noscript><p class="noscript">PocketNepal needs JavaScript to run. Please enable it in your browser.</p></noscript>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
